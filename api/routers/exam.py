@@ -8,6 +8,9 @@ router = Router()
 
 @router.post("/", response=ExamSchema)
 def create_exam(request, data: ExamCreateSchema):
+    if not request.user.is_authenticated:
+        return {"detail":"Authentication required"}, 401
+    
     exam = ModelExam.objects.create(name=data.name, created_by=request.user)
     return ExamSchema.from_orm(exam)
 

@@ -27,7 +27,7 @@ def list_choices(request, query: str = None, question_id: int = None, order_by: 
         choices = choices.filter(question_id=question_id)
 
     if query:
-        choices = choices.filter(Q(text_icontains=query)) 
+        choices = choices.filter(Q(text__icontains=query)) 
     
     choices = choices.order_by(order_by)
     start = (page-1)*page_size
