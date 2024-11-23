@@ -1,14 +1,14 @@
-FROM python:3.10-slim
+FROM python:3.10
 
-# Diretório de trabalho
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Instalação do Poetry e dependências
-COPY pyproject.toml poetry.lock ./
-RUN pip install poetry && poetry config virtualenvs.create true && poetry install --no-dev
+# Instala as dependências
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia os arquivos do projeto
 COPY . .
 
-# Comando padrão
-CMD ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Comando padrão: aplica migrações e executa o servidor
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]

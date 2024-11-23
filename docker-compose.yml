@@ -1,57 +1,33 @@
+version: '3.8'
+
 services:
-  app:
-    build:
-      context: .
-    container_name: django_app
-    command: poetry run python manage.py runserver 0.0.0.0:8000
-    ports:
-      - "8000:8000"
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
-    environment:
-      DEBUG: "True"
-      SECRET_KEY: your_secret_key
-      DATABASE_URL: sqlite:///db.sqlite3
-      CELERY_BROKER_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
     depends_on:
       - redis
-    stdin_open: true
-    tty: true
 
   redis:
-    image: redis:7
-    container_name: redis_service
+    image: redis:alpine
     ports:
       - "6379:6379"
 
   celery:
-    build:
-      context: .
-    container_name: celery_worker
-    command: poetry run celery -A core worker --loglevel=info
-    environment:
-      DEBUG: "True"
-      SECRET_KEY: "django-insecure-(g5o349%pxyl=-x81&lk32v4c-^b)i&oe)fp!*g_muzve1ec_j"
-      DATABASE_URL: sqlite:///db.sqlite3
-      CELERY_BROKER_URL: redis://redis:6379/0
-    depends_on:
-      - redis
-      - app
+    build: .
+    command: sh -c "celery -A exam_manager worker --loglevel=info"
     volumes:
       - .:/app
+    depends_on:
+      - redis
 
-  celery_beat:
-    build:
-      context: .
-    container_name: celery_beat
-    command: poetry run celery -A core beat --loglevel=info
-    environment:
-      DEBUG: "True"
-      SECRET_KEY: "django-insecure-(g5o349%pxyl=-x81&lk32v4c-^b)i&oe)fp!*g_muzve1ec_j"
-      DATABASE_URL: sqlite:///db.sqlite3
-      CELERY_BROKER_URL: redis://redis:6379/0
-    depends_on:
-      - redis
-      - app
+  celery-beat:
+    build: .
+    command: sh -c "celery -A exam_manager beat --loglevel=info"
     volumes:
       - .:/app
+    depends_on:
+      - redis
