@@ -12,7 +12,7 @@ def create_exam(request, data: ExamCreateSchema):
     return ExamSchema.from_orm(exam)
 
 @router.get("/", response=List[ExamSchema])
-def list_exams(request, query: str = None, order_by: str = "-created_at", page: int = 1, page_size: int = 10):
+def list_exams(request, query: str = None, order_by: str = "created_at", page: int = 1, page_size: int = 10):
     exams = ModelExam.objects.all()
     if query:
         exams = exams.filter(Q(name__icontains=query))

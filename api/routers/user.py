@@ -23,10 +23,27 @@ def create_user(request, data: UserCreateSchema):
     return UserSchema.from_orm(user)
 
 @router.get("/", response=List[UserSchema])
-def list_users(request, query: str = None, page: int = 1, page_size: int = 10):
-    users = User.objects.all()
+def list_users(request, query: str = None, order_by: str = "username", page: int = 1, page_size: int = 10):
+    users = User.objects.all().select_related("profile")
     if query:
         users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
+    
+    users = users.order_by(order_by)
     start = (page - 1) * page_size
     end = start + page_size
-    return users[start:end]
+
+    response = []
+
+    for user in users[start:end]:
+        profile = getattr(user, "profile", None)
+        is_admin = profile.is_admin if profile else False
+        is_participant = profile.is_participant if profile else not is_admin
+
+        response.append({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email if user.email else "invalid@example.com",
+            "is_admin": is_admin,
+            "is_participant": is_participant,
+        })
+    return response
