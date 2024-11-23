@@ -5,3 +5,4 @@ djangorestframework-simplejwt
 celery
 redis
 psycopg2-binary
+email-validator

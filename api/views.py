@@ -1,9 +1,8 @@
 from ninja import NinjaAPI
-from api.models import ModelExam
-from typing import List
+from api.routers.user import router as user_router
+from api.routers.exam import router as exam_router
 
 api = NinjaAPI()
 
-@api.get("/exams", response=List[str])
-def list_exams(request):
-    return list(ModelExam.objects.values_list('name', flat=True))
+api.add_router("/users", user_router)
+api.add_router("/exams", exam_router)
