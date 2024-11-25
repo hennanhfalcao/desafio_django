@@ -9,8 +9,16 @@ router = Router()
 
 @router.post("/", response=ChoicesSchema)
 def create_choice(request, data: ChoicesCreateSchema):
+    if not request.user.is_authenticated:
+        return {"detail":"Authentication required"}, 401
+    
+    try:
+        question = ModelQuestion.objects.get(id=data.question_id)
+    except ModelQuestion.DoesNotExist:
+        return {"detail":"Question not found"}, 404
+    
     choice = ModelChoice.objects.create(
-        question_id=data.question_id,
+        question=question,
         text=data.text,
         is_correct=data.is_correct
     )
@@ -35,3 +43,8 @@ def list_choices(request, query: str = None, question_id: int = None, order_by: 
 
 
     return choices[start:end]
+
+"""@router.get("/{choice_id}/", response=ChoicesSchema)
+def get_choice(request, choice_id: int):
+    try:
+        choice=ModelChoice.objects.get(id=choice_id)"""

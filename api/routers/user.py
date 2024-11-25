@@ -1,7 +1,7 @@
 from typing import List
 from ninja import Router
 from api.models import ModelUserProfile
-from api.schemas import UserCreateSchema, UserSchema
+from api.schemas import UserSchema, UserCreateSchema
 from django.contrib.auth.models import User
 from django.db.models import Q
 
@@ -24,6 +24,9 @@ def create_user(request, data: UserCreateSchema):
 
 @router.get("/", response=List[UserSchema])
 def list_users(request, query: str = None, order_by: str = "username", page: int = 1, page_size: int = 10):
+    if not request.user.is_authenticated or not request.user.is_admin:
+        return {"detail": "Unauthorized"}, 403
+    
     users = User.objects.all().select_related("profile")
     if query:
         users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
@@ -34,19 +37,7 @@ def list_users(request, query: str = None, order_by: str = "username", page: int
 
     response = []
 
-    for user in users[start:end]:
-        profile = getattr(user, "profile", None)
-        is_admin = profile.is_admin if profile else False
-        is_participant = profile.is_participant if profile else not is_admin
-
-        response.append({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email if user.email else "invalid@example.com",
-            "is_admin": is_admin,
-            "is_participant": is_participant,
-        })
-    return response
+    return [UserSchema.from_orm(user) for user in users[start:end]]
 
 @router.get("/{user_id}/", response=UserSchema)
 def get_user(request, user_id: int):
@@ -65,6 +56,9 @@ def get_user(request, user_id: int):
 
 @router.put("/{user_id}/", response=UserSchema)
 def update_user(request, user_id: int, data: UserCreateSchema):
+    if not request.user.is_authenticated or not request.user.is_admin:
+        return {"detail": "Unauthorized"}, 403
+    
     try:
         user=User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -86,6 +80,9 @@ def update_user(request, user_id: int, data: UserCreateSchema):
 
 @router.patch("/{user_id}/", response=UserSchema)
 def partial_update_user(request, user_id: int, data: UserCreateSchema):
+    if not request.user.is_authenticated or not request.user.is_admin:
+        return {"detail": "Unauthorized"}, 403
+    
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -97,7 +94,6 @@ def partial_update_user(request, user_id: int, data: UserCreateSchema):
         user.email = data.email
     if data.password is not None:
         user.set_password(data.password)
-    user.save()
 
     profile = user.profile
     if data.is_admin is not None:
@@ -105,11 +101,13 @@ def partial_update_user(request, user_id: int, data: UserCreateSchema):
     if data.is_participant is not None:
         profile.is_participant = data.is_participant
     profile.save()
-
+    user.save()
     return UserSchema.from_orm(user)            
 
 @router.delete("/{user_id}/", response={204:None})
 def delete_user(request, user_id: int):
+    if not request.user.is_authenticated or not request.user.is_admin:
+        return {"detail": "Unauthorized"}, 403
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
