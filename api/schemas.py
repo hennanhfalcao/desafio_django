@@ -49,7 +49,7 @@ class ExamSchema(Schema):
     id: int
     name: str
     created_by_id: int
-    created_at: str
+    created_at: datetime
 
 class QuestionCreateSchema(Schema):
     exam_id: int

@@ -1,21 +1,32 @@
 from typing import List
-from ninja import Router
+from ninja import Router, Schema
 from api.models import ModelExam, ModelParticipation
 from api.schemas import ExamCreateSchema, ExamSchema
 from django.db.models import Q
+from ninja.errors import HttpError
+from api.utils import is_authenticated, is_admin
+from django.http import JsonResponse
 
 router = Router()
 
+class ErrorSchema(Schema):
+    detail: str
+
 @router.post("/", response=ExamSchema)
 def create_exam(request, data: ExamCreateSchema):
-    if not request.user.is_authenticated:
-        return {"detail":"Authentication required"}, 401
-    
-    if not request.user.profile.is_admin:
-        return {"detail": "Only administrators can create exams"}, 403
-    
+    # Verifica autenticação
+    auth_error = is_authenticated(request)
+    if auth_error:
+        return JsonResponse(auth_error[0], status=auth_error[1])  # Usa JsonResponse para compatibilidade
+
+    # Verifica permissão de administrador
+    admin_error = is_admin(request)
+    if admin_error:
+        return JsonResponse(admin_error[0], status=admin_error[1])  # Usa JsonResponse para compatibilidade
+
+    # Cria a prova se as verificações passarem
     exam = ModelExam.objects.create(name=data.name, created_by=request.user)
-    return ExamSchema.from_orm(exam)
+    return JsonResponse(ExamSchema.from_orm(exam).dict(), status=200)  # Retorna o schema no formato esperado
 
 @router.get("/", response=List[ExamSchema])
 def list_exams(request, query: str = None, order_by: str = "-created_at", page: int = 1, page_size: int = 10):
