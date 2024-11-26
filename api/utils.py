@@ -2,6 +2,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from ninja.errors import HttpError
 
 def generate_jwt(user):
     payload = {
@@ -23,13 +24,11 @@ def decode_jwt(token):
     
 def is_authenticated(request):
     if isinstance(request.user, AnonymousUser):
-        return {"detail": "Authentication required"}, 401
-    return None
+        raise HttpError(401, "Authentication required")
 
 def is_admin(request):
     if not getattr(request.user.profile, "is_admin", False):
-        return {"detail": "Permission denied"}, 403
-    return None
+        raise HttpError(403, "Permission denied")
 
 def paginate_and_order(queryset, order_by, page, page_size):
     queryset = queryset.order_by(order_by)

@@ -35,7 +35,7 @@ class UserSchema(BaseModel):
 class UserUpdateSchema(BaseModel):
     username: Optional[str]
     password: Optional[str]
-    email: Optional[str]
+    email: Optional[EmailStr]  # Adiciona validação de e-mail
     is_admin: Optional[bool]
     is_participant: Optional[bool]
 
@@ -50,6 +50,9 @@ class ExamSchema(Schema):
     name: str
     created_by_id: int
     created_at: datetime
+
+class ExamUpdateSchema(Schema):
+    name: Optional[str]
 
 class QuestionCreateSchema(Schema):
     exam_id: int
@@ -94,3 +97,6 @@ class AnswerSchema(Schema):
     question_id: int
     choice_id: int
     answered_at: datetime    
+
+class ErrorSchema(Schema):
+    detail: str

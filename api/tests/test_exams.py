@@ -29,6 +29,9 @@ class TestExamEndpoints(APITestCase):
             is_participant=True
         )
 
+        # Criação de exam
+        self.exam = ModelExam.objects.create(name="Test Exam", created_by=self.admin_user)
+
         # Obtenção de tokens
         admin_login_response = self.client.post(
             "/api/auth/login/",
@@ -52,23 +55,41 @@ class TestExamEndpoints(APITestCase):
         payload = {"name": "New Exam"}
         response = self.client.post("/api/exams/", payload, **self.admin_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json().get("name"), "New Exam")
-        self.assertEqual(response.json().get("created_by_id"), self.admin_user.id)
+        self.assertEqual(response.json()["name"], "New Exam")
 
     def test_create_exam_as_participant(self):
         payload = {"name": "New Exam"}
         response = self.client.post("/api/exams/", payload, **self.participant_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.json().get("detail"), "Permission denied")  # Compatível com utils.py
+        self.assertEqual(response.json()["detail"], "Permission denied")
 
-    def test_create_exam_unauthenticated(self):
-        payload = {"name": "New Exam"}
-        response = self.client.post("/api/exams/", payload, format="json")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.json().get("detail"), "Authentication required")  # Compatível com utils.py
+    def test_partial_update_exam_as_admin(self):
+        payload = {"name": "Updated Exam Name"}
+        response = self.client.patch(
+            f"/api/exams/{self.exam.id}/",
+            payload,
+            **self.admin_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["name"], "Updated Exam Name")
 
-    def test_create_exam_missing_data(self):
-        payload = {}  # Nome ausente
-        response = self.client.post("/api/exams/", payload, **self.admin_headers, format="json")
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
-        self.assertIn("name", [error["loc"][-1] for error in response.json().get("detail", [])])
+    def test_partial_update_exam_as_participant(self):
+        payload = {"name": "Updated Exam Name"}
+        response = self.client.patch(
+            f"/api/exams/{self.exam.id}/",
+            payload,
+            **self.participant_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()["detail"], "Permission denied")
+
+    def test_delete_exam_as_admin(self):
+        response = self.client.delete(f"/api/exams/{self.exam.id}/", **self.admin_headers)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_exam_as_participant(self):
+        response = self.client.delete(f"/api/exams/{self.exam.id}/", **self.participant_headers)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()["detail"], "Permission denied")

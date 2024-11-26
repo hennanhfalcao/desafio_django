@@ -1,111 +1,84 @@
-from typing import List
-from ninja import Router, Schema
-from api.models import ModelExam, ModelParticipation
-from api.schemas import ExamCreateSchema, ExamSchema
+from ninja import Router
 from django.db.models import Q
-from ninja.errors import HttpError
+from api.models import ModelExam
+from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema
 from api.utils import is_authenticated, is_admin
-from django.http import JsonResponse
+from ninja.errors import HttpError
+from django.shortcuts import get_object_or_404
 
-router = Router()
+router = Router(tags=["Exams"])
 
-class ErrorSchema(Schema):
-    detail: str
-
-@router.post("/", response=ExamSchema)
-def create_exam(request, data: ExamCreateSchema):
-    # Verifica autenticação
-    auth_error = is_authenticated(request)
-    if auth_error:
-        return JsonResponse(auth_error[0], status=auth_error[1])  # Usa JsonResponse para compatibilidade
-
-    # Verifica permissão de administrador
-    admin_error = is_admin(request)
-    if admin_error:
-        return JsonResponse(admin_error[0], status=admin_error[1])  # Usa JsonResponse para compatibilidade
-
-    # Cria a prova se as verificações passarem
-    exam = ModelExam.objects.create(name=data.name, created_by=request.user)
-    return JsonResponse(ExamSchema.from_orm(exam).dict(), status=200)  # Retorna o schema no formato esperado
-
-@router.get("/", response=List[ExamSchema])
-def list_exams(request, query: str = None, order_by: str = "-created_at", page: int = 1, page_size: int = 10):
-    if not request.user.is_authenticated:
-        return {"detail": "Authentication required"}, 401
-    
-    if request.user.profile.is_participant:
-        exams = ModelExam.objects.filter(participations__user=request.user)
-    else:
-        exams = ModelExam.objects.all()
-    
-    if query:
-        exams = exams.filter(Q(name__icontains=query))
-    exams = exams.order_by(order_by) 
-    start = (page-1)*page_size
-    end = start + page_size
-    return [ExamSchema.from_orm(exam) for exam in exams[start:end]]
-
-@router.get("/{exam_id}/", response=ExamSchema)
-def get_exam(request, exam_id: int):
-    if not request.user.is_authenticated:
-        return {"detail": "Authentication required"}, 401
-    try:
-        exam = ModelExam.objects.get(id=exam_id)
-    except ModelExam.DoesNotExist:
-        return {"detail":"Exam not found"}, 404
-    
-    if request.user.profile.is_participant and not ModelParticipation.objects.filter(exam=exam, user=request.user).exists():
-        return {"detail": "You do not have access to this exam"}, 403
-    
+@router.post("/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
+def create_exam(request, payload: ExamCreateSchema):
+    """Create a new exam."""
+    is_authenticated(request)
+    is_admin(request)
+    exam = ModelExam.objects.create(name=payload.name, created_by=request.user)
     return ExamSchema.from_orm(exam)
 
-@router.put("/{exam_id}/", response=ExamSchema)
-def update_exam(request, exam_id:int, data: ExamCreateSchema):
-    if not request.user.is_authenticated:
-        return {"detail": "Authentication required"}, 401
-    
-    if not request.user.profile.is_admin:
-        return {"detail": "Only administrators can update exams"}, 403
-    
+@router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
+def list_exams(request, search: str = None, ordering: str = "id"):
+    """List all exams with optional search and ordering."""
+    is_authenticated(request)
+    exams = ModelExam.objects.all()
+    if search:
+        exams = exams.filter(Q(name__icontains=search) | Q(created_by__username__icontains=search))
+    exams = exams.order_by(ordering)
+    return [ExamSchema.from_orm(exam) for exam in exams]
+
+@router.get("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+def get_exam_details(request, exam_id: int):
+    """Retrieve details of a specific exam by ID."""
+    is_authenticated(request)
     try:
         exam = ModelExam.objects.get(id=exam_id)
     except ModelExam.DoesNotExist:
-        return {"detail":"Exam not found"}, 404
+        raise HttpError(404, ErrorSchema(detail="Exam not found"))
+    return ExamSchema.from_orm(exam)
 
-    exam.name = data.name
+@router.patch(
+    "/{exam_id}/",
+    response={200: ExamSchema, 403: ErrorSchema, 422: ErrorSchema},
+    auth=None
+)
+def partial_update_exam(request, exam_id: int, data: ExamUpdateSchema):
+    """
+    Atualiza parcialmente um exame.
+    """
+    is_authenticated(request)
+    is_admin(request)
+
+    exam = get_object_or_404(ModelExam, id=exam_id)
+
+    # Atualiza apenas os campos definidos no payload
+    for attr, value in data.model_dump(exclude_unset=True).items():  # Alterado para `model_dump`
+        setattr(exam, attr, value)
+
     exam.save()
-    return ExamSchema.from_orm(exam)    
+    return 200, ExamSchema.from_orm(exam)
 
-@router.patch("/{exam_id}/", response=ExamSchema)
-def partial_update_exam(request, exam_id: int, data: ExamCreateSchema):
-    if not request.user.is_authenticated:
-        return {"detail":"Authentication required"}, 401
-    
-    if not request.user.profile.is_admin:
-        return {"detail": "Only administrators can update exams"}, 403
-
+@router.put("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+def full_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
+    """Fully update an exam."""
+    is_authenticated(request)
+    is_admin(request)
     try:
-        exam= ModelExam.objects.get(id=exam_id)
+        exam = ModelExam.objects.get(id=exam_id)
     except ModelExam.DoesNotExist:
-        return {"detail":"Exam not found"}, 404
-
-    if data.name is not None:
-        exam.name = data.name
+        raise HttpError(404, ErrorSchema(detail="Exam not found"))
+    for attr, value in payload.dict(exclude_unset=True).items():
+        setattr(exam, attr, value)
     exam.save()
     return ExamSchema.from_orm(exam)
 
-@router.delete("/{exam_id}/", response={204: None})
-def delete_exam(request, exam_id:int):
-    if not request.user.is_authenticated:
-        return {"detail":"Authentication required"}, 401
-    
-    if not request.user.profile.is_admin:
-        return {"detail": "Only administrators can delete exams"}, 403
-    
+@router.delete("/{exam_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+def delete_exam(request, exam_id: int):
+    """Delete an exam by ID."""
+    is_authenticated(request)
+    is_admin(request)
     try:
         exam = ModelExam.objects.get(id=exam_id)
     except ModelExam.DoesNotExist:
-        return {"detail": "Exam not found"}, 404
-
+        raise HttpError(404, ErrorSchema(detail="Exam not found"))
     exam.delete()
-    return 204, None    
+    return 204, None
