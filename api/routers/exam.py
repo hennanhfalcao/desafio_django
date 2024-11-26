@@ -2,7 +2,7 @@ from ninja import Router
 from django.db.models import Q
 from api.models import ModelExam
 from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema
-from api.utils import is_authenticated, is_admin
+from api.utils import is_authenticated, is_admin, paginate_queryset, order_queryset
 from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 
@@ -10,25 +10,38 @@ router = Router(tags=["Exams"])
 
 @router.post("/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
 def create_exam(request, payload: ExamCreateSchema):
-    """Create a new exam."""
+    """Cria uma nova prova"""
     is_authenticated(request)
     is_admin(request)
     exam = ModelExam.objects.create(name=payload.name, created_by=request.user)
     return ExamSchema.from_orm(exam)
 
 @router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
-def list_exams(request, search: str = None, ordering: str = "id"):
-    """List all exams with optional search and ordering."""
+def list_exams(
+    request, 
+    search: str = None, 
+    ordering: str = "id", 
+    page: int = 1, 
+    page_size: int = 10
+):
+    """
+    Lista todos os exames com busca, ordenação e paginação opcionais.
+    """
     is_authenticated(request)
+
     exams = ModelExam.objects.all()
     if search:
         exams = exams.filter(Q(name__icontains=search) | Q(created_by__username__icontains=search))
-    exams = exams.order_by(ordering)
+
+    exams = order_queryset(exams, ordering)
+
+    exams = paginate_queryset(exams, page, page_size)
+
     return [ExamSchema.from_orm(exam) for exam in exams]
 
 @router.get("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_exam_details(request, exam_id: int):
-    """Retrieve details of a specific exam by ID."""
+    """Recupera detalhes de uma prova específico pelo ID."""
     is_authenticated(request)
     try:
         exam = ModelExam.objects.get(id=exam_id)
@@ -59,7 +72,7 @@ def partial_update_exam(request, exam_id: int, data: ExamUpdateSchema):
 
 @router.put("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def full_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
-    """Fully update an exam."""
+    """Atualiza completamente uma prova."""
     is_authenticated(request)
     is_admin(request)
     try:
@@ -73,7 +86,7 @@ def full_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
 
 @router.delete("/{exam_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_exam(request, exam_id: int):
-    """Delete an exam by ID."""
+    """Apaga uma prova pelo seu ID."""
     is_authenticated(request)
     is_admin(request)
     try:

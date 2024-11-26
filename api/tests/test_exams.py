@@ -6,7 +6,7 @@ from api.models import ModelUserProfile, ModelExam
 
 class TestExamEndpoints(APITestCase):
     def setUp(self):
-        # Criação de usuários
+
         self.admin_user = User.objects.create_user(
             username="admin",
             password="admin123",
@@ -29,10 +29,14 @@ class TestExamEndpoints(APITestCase):
             is_participant=True
         )
 
-        # Criação de exam
         self.exam = ModelExam.objects.create(name="Test Exam", created_by=self.admin_user)
 
-        # Obtenção de tokens
+        for i in range(15):
+            ModelExam.objects.create(
+                name=f"Exam {i+1}",
+                created_by=self.admin_user
+            )
+
         admin_login_response = self.client.post(
             "/api/auth/login/",
             {"username": "admin", "password": "admin123"},
@@ -93,3 +97,39 @@ class TestExamEndpoints(APITestCase):
         response = self.client.delete(f"/api/exams/{self.exam.id}/", **self.participant_headers)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.json()["detail"], "Permission denied")
+
+    def test_list_exams_pagination(self):
+        """
+        Testa a paginação de exames, verificando se o número correto de exames é retornado por página.
+        """
+        response = self.client.get('/api/exams/?page=1&page_size=5', **self.admin_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 5)
+
+        response = self.client.get('/api/exams/?page=2&page_size=5', **self.admin_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 5)
+
+        response = self.client.get('/api/exams/?page=3&page_size=5', **self.admin_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 5)
+
+    def test_list_exams_ordering(self):
+        """
+        Testa a ordenação dos exames com base no campo `name` em ordem decrescente.
+        """
+        response = self.client.get('/api/exams/?ordering=-name', **self.admin_headers)
+        self.assertEqual(response.status_code, 200)
+
+        exams = response.json()
+        self.assertTrue(exams[0]['name'] > exams[-1]['name'])
+
+    def test_list_exams_search(self):
+        """
+        Testa a busca de exames com base no campo `name`.
+        """
+        response = self.client.get('/api/exams/?search=Exam 1', **self.admin_headers)
+        self.assertEqual(response.status_code, 200)
+
+        exams = response.json()
+        self.assertTrue(any("Exam 1" in exam['name'] for exam in exams)) 

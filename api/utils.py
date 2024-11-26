@@ -31,7 +31,20 @@ def is_admin(request):
         raise HttpError(403, "Permission denied")
 
 def paginate_and_order(queryset, order_by, page, page_size):
-    queryset = queryset.order_by(order_by)
+    queryset = order_queryset(queryset, order_by)
+    queryset = paginate_queryset(queryset, page, page_size)
+    return queryset
+
+def order_queryset(queryset, order_by):
+    """
+    Ordena o queryset com base em um campo fornecido.
+    """
+    return queryset.order_by(order_by)
+
+def paginate_queryset(queryset, page, page_size):
+    """
+    Pagina o queryset com base no número da página e no tamanho da página.
+    """
     start = (page - 1) * page_size
     end = start + page_size
     return queryset[start:end]
