@@ -63,6 +63,11 @@ def get_user(request, user_id: int):
     if auth_error:
         return Response(auth_error, status=auth_error[1])
 
+    if request.user.id != user_id:
+        admin_error = is_admin(request)
+        if admin_error:
+            return Response(admin_error, status=admin_error[1])
+
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
