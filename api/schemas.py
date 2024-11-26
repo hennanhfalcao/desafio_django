@@ -31,6 +31,17 @@ class UserSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserUpdateSchema(BaseModel):
+    username: Optional[str]
+    password: Optional[str]
+    email: Optional[str]
+    is_admin: Optional[bool]
+    is_participant: Optional[bool]
+
+    class Config:
+        orm_mode = True
+                
 class ExamCreateSchema(Schema):
     name: str
 

@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import ModelUserProfile
 
-# Register your models here.
+@admin.register(ModelUserProfile)
+class ModelUserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'is_admin', 'is_participant')
+    search_fields = ('user__username',)
+    list_filter = ('is_admin', 'is_participant')

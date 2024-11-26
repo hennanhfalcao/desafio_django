@@ -7,13 +7,17 @@ class ModelUserProfile(models.Model):
     is_participant = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        if not self.pk and ModelUserProfile.objects.filter(user=self.user).exists():
-            raise ValueError("Profile for this user already exists.")
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.username} - Admin: {self.is_admin} - Participant: {self.is_participant}"
 
+    def is_administrator(self):
+        return self.is_admin
+
+    def is_participant_only(self):
+        return self.is_participant and not self.is_admin
+    
 class ModelExam(models.Model):
     name = models.CharField(max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_exams")
