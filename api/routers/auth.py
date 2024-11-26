@@ -1,17 +1,22 @@
-from ninja import Router
-from ninja.responses import Response
+from ninja import Router, Schema
+from ninja.errors import HttpError
 from django.contrib.auth import authenticate
 from api.utils import generate_jwt
 
-router = Router(tags=["Auth"])
+router = Router(tags=["Authentication"])
 
-@router.post("/login/", response={200: dict, 400: dict})
-def login(request, username: str, password: str):
+class LoginSchema(Schema):
+    username: str
+    password: str
+
+@router.post("/login/", response={200: dict, 401: dict})
+def login(request, payload: LoginSchema):
     """
-    Autentica o usuário e retorna um token JWT.
+    Endpoint para autenticação de usuários.
     """
-    user = authenticate(username=username, password=password)
+    user = authenticate(username=payload.username, password=payload.password)
     if not user:
-        return Response({"detail": "Invalid credentials"}, status=400)
+        return HttpError(401, {"detail": "Invalid username or password"})
+
     token = generate_jwt(user)
-    return {"token": token}
+    return {"access_token": token}

@@ -1,5 +1,5 @@
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 
@@ -7,11 +7,11 @@ def generate_jwt(user):
     payload = {
         'user_id': user.id,
         'username': user.username,
-        'exp': datetime.utcnow() + timedelta(minutes=30),  # Expira em 30 minutos
-        'iat': datetime.utcnow(),  # Emitido em
+        'exp': datetime.now(tz=timezone.utc) + timedelta(minutes=30),  # Expira em 30 minutos
+        'iat': datetime.now(tz=timezone.utc),  # Emitido em
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-    return token
+    return token.decode('utf-8') if isinstance(token, bytes) else token
 
 def decode_jwt(token):
     try:
