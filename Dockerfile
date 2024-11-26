@@ -7,8 +7,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia os arquivos do projeto
+# Copia os arquivos do projeto para o contêiner
 COPY . .
 
-# Comando padrão: aplica migrações e executa o servidor
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+# Comando padrão: aplica as migrações e inicia o servidor
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]

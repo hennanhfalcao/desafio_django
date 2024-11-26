@@ -7,6 +7,9 @@ from api.routers.question import router as question_router
 from api.routers.choice import router as choice_router
 from api.routers.participation import router as participation_router
 from api.routers.answer import router as answer_router
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 api = NinjaExtraAPI()
 

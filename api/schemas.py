@@ -2,21 +2,35 @@ from ninja import Schema
 from pydantic import EmailStr
 from datetime import datetime
 from typing import List
+from pydantic import BaseModel
+from typing import Optional
 
-class UserCreateSchema(Schema):
+class UserCreateSchema(BaseModel):
     username: str
     password: str
-    email: EmailStr
-    is_admin: bool = False
-    is_participant: bool = True
-
-class UserSchema(Schema):
-    id: int
-    username: str
-    email: EmailStr
+    email: Optional[str] = None
     is_admin: bool
     is_participant: bool
 
+class UserSchema(BaseModel):
+    id: int
+    username: str
+    email: Optional[str] = None
+    is_admin: bool
+    is_participant: bool
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            id=obj.id,
+            username=obj.username,
+            email=obj.email,
+            is_admin=obj.profile.is_admin,
+            is_participant=obj.profile.is_participant,
+        )
+
+    class Config:
+        orm_mode = True
 class ExamCreateSchema(Schema):
     name: str
 

@@ -4,6 +4,6 @@ djangorestframework
 djangorestframework-simplejwt
 celery
 redis
-psycopg2-binary
 email-validator
 django-ninja-jwt
+djangorestframework-jwt

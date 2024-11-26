@@ -6,6 +6,11 @@ class ModelUserProfile(models.Model):
     is_admin = models.BooleanField(default=False)
     is_participant = models.BooleanField(default=True)
 
+    def save(self, *args, **kwargs):
+        if not self.pk and ModelUserProfile.objects.filter(user=self.user).exists():
+            raise ValueError("Profile for this user already exists.")
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.user.username} - Admin: {self.is_admin} - Participant: {self.is_participant}"
 
