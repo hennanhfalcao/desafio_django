@@ -15,3 +15,7 @@ poetry install
 
 # Rodar o servidor Django
 poetry run python manage.py runserver
+
+# Executar as migrações localmente caso a pasta migrations não esteja presente
+docker-compose exec web python manage.py makemigrations api
+docker-compose exec web python manage.py migrate
