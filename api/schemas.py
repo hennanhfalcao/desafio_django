@@ -54,6 +54,11 @@ class ExamSchema(Schema):
 class ExamUpdateSchema(Schema):
     name: Optional[str]
 
+class QuestionUpdateSchema(Schema):
+    id: int
+    exam_id: int
+    text: Optional[str]
+    
 class QuestionCreateSchema(Schema):
     exam_id: int
     text: str

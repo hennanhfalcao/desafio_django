@@ -29,8 +29,8 @@ def create_user(request, payload: UserCreateSchema):
 @router.get("/", response={200: list[UserSchema], 401: ErrorSchema, 403: ErrorSchema})
 def list_users(
     request, 
-    search: str = None, 
-    ordering: str = "id", 
+    query: str = None, 
+    order_by: str = "id", 
     page: int = 1, 
     page_size: int = 10
 ):
@@ -41,10 +41,10 @@ def list_users(
     is_admin(request)
 
     users = User.objects.all()
-    if search:
-        users = users.filter(Q(username__icontains=search) | Q(email__icontains=search))
+    if query:
+        users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
 
-    users = order_queryset(users, ordering)
+    users = order_queryset(users, order_by)
 
     users = paginate_queryset(users, page, page_size)
 

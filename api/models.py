@@ -29,12 +29,12 @@ class ModelExam(models.Model):
     
 
 class ModelQuestion(models.Model):
-    exam = models.ForeignKey(ModelExam, on_delete=models.CASCADE, related_name="questions")
+    exams = models.ManyToManyField(ModelExam, related_name="questions")
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.exam.name} - {self.text[:50]}"    
+        return f"{self.exams.name} - {self.text[:50]}"    
 
 
 class ModelChoice(models.Model):

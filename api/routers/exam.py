@@ -19,8 +19,8 @@ def create_exam(request, payload: ExamCreateSchema):
 @router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
 def list_exams(
     request, 
-    search: str = None, 
-    ordering: str = "id", 
+    query: str = None, 
+    order_by: str = "id", 
     page: int = 1, 
     page_size: int = 10
 ):
@@ -30,10 +30,10 @@ def list_exams(
     is_authenticated(request)
 
     exams = ModelExam.objects.all()
-    if search:
-        exams = exams.filter(Q(name__icontains=search) | Q(created_by__username__icontains=search))
+    if query:
+        exams = exams.filter(Q(name__icontains=query) | Q(created_by__username__icontains=query))
 
-    exams = order_queryset(exams, ordering)
+    exams = order_queryset(exams, order_by)
 
     exams = paginate_queryset(exams, page, page_size)
 
@@ -63,8 +63,7 @@ def partial_update_exam(request, exam_id: int, data: ExamUpdateSchema):
 
     exam = get_object_or_404(ModelExam, id=exam_id)
 
-    # Atualiza apenas os campos definidos no payload
-    for attr, value in data.model_dump(exclude_unset=True).items():  # Alterado para `model_dump`
+    for attr, value in data.model_dump(exclude_unset=True).items():
         setattr(exam, attr, value)
 
     exam.save()
