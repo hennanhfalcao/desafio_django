@@ -1,24 +1,14 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Modelos
 
 class ModelUserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     is_admin = models.BooleanField(default=False)
     is_participant = models.BooleanField(default=True)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"{self.user.username} - Admin: {self.is_admin} - Participant: {self.is_participant}"
-
-    def is_administrator(self):
-        return self.is_admin
-
-    def is_participant_only(self):
-        return self.is_participant and not self.is_admin
 
 
 class ModelExam(models.Model):
@@ -36,6 +26,10 @@ class ModelQuestion(models.Model):
 
     def __str__(self):
         return self.text[:50]
+
+    def get_correct_choice(self):
+        """Retorna a alternativa correta para a questão."""
+        return self.choices.filter(is_correct=True).first()
 
 
 class ModelChoice(models.Model):
@@ -80,8 +74,6 @@ class ModelAnswer(models.Model):
         return f"{self.participation.user.username} - {self.question.text[:50]} - {self.choice.text}"
 
 
-# Modelos Intermediários
-
 class ModelExamParticipant(models.Model):
     exam = models.ForeignKey(ModelExam, on_delete=models.CASCADE, related_name="exam_participants")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_exams")
@@ -100,7 +92,7 @@ class ModelExamQuestion(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("exam", "question") 
+        unique_together = ("exam", "question")
 
     def __str__(self):
         return f"Exam: {self.exam.name}, Question: {self.question.text[:50]}"
