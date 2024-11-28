@@ -1,76 +1,52 @@
-from typing import List, Optional
+from typing import List
 from ninja import Router
 from api.models import ModelChoice, ModelQuestion
-from api.schemas import ChoicesSchema, ChoicesCreateSchema, ChoicesUpdateSchema, ErrorSchema
-from api.utils import is_authenticated, is_admin, paginate_queryset, order_queryset
-from django.db.models import Q
+from api.schemas import (
+    ChoicesSchema,
+    ChoicesCreateSchema,
+    ChoicesUpdateSchema,
+    ErrorSchema,
+)
+from api.utils import is_authenticated, is_admin
 from ninja.errors import HttpError
 
 router = Router(tags=["Choices"])
 
 
-@router.post("/", response={200: ChoicesSchema, 400: ErrorSchema, 401: ErrorSchema, 403: ErrorSchema})
+@router.post("/", response={200: ChoicesSchema, 401: ErrorSchema, 403: ErrorSchema})
 def create_choice(request, payload: ChoicesCreateSchema):
+    """
+    Cria uma nova alternativa para uma questão.
+    Apenas administradores têm permissão.
+    """
     is_authenticated(request)
     is_admin(request)
 
     try:
         question = ModelQuestion.objects.get(id=payload.question_id)
     except ModelQuestion.DoesNotExist:
-        raise HttpError(404,"Question not found")
+        raise HttpError(404, "Question not found")
 
-
-    if question.choices.count() >= 4:
-        raise HttpError(400,"A question must have exactly 4 choices.")
-
-    # Criar a alternativa
     choice = ModelChoice.objects.create(
-        question=question,
-        text=payload.text,
-        is_correct=payload.is_correct
+        question=question, text=payload.text, is_correct=payload.is_correct
     )
-    return ChoicesSchema.from_orm(choice)
 
+    choice_data = {
+        "id": choice.id,
+        "question_id": choice.question.id,
+        "text": choice.text,
+        "is_correct": choice.is_correct,
+    }
 
-@router.get("/", response={200: List[ChoicesSchema], 401: ErrorSchema, 403: ErrorSchema})
-def list_choices(
-    request, 
-    query: Optional[str] = None, 
-    question_id: Optional[int] = None, 
-    order_by: str = "id", 
-    page: int = 1, 
-    page_size: int = 10
-):
-    is_authenticated(request)
-
-    choices = ModelChoice.objects.all()
-
-    if question_id:
-        choices = choices.filter(question_id=question_id)
-
-    if query:
-        choices = choices.filter(Q(text__icontains=query))
-
-    choices = order_queryset(choices, order_by)
-    choices = paginate_queryset(choices, page, page_size)
-
-    return [ChoicesSchema.from_orm(choice) for choice in choices]
+    return ChoicesSchema(**choice_data)
 
 
 @router.get("/{choice_id}/", response={200: ChoicesSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_choice(request, choice_id: int):
-    is_authenticated(request)
-
-    try:
-        choice = ModelChoice.objects.get(id=choice_id)
-    except ModelChoice.DoesNotExist:
-        raise HttpError(404, "Choice not found")
-
-    return ChoicesSchema.from_orm(choice)
-
-
-@router.put("/{choice_id}/", response={200: ChoicesSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
-def update_choice(request, choice_id: int, payload: ChoicesUpdateSchema):
+    """
+    Recupera uma alternativa específica pelo seu ID.
+    Apenas administradores têm permissão.
+    """
     is_authenticated(request)
     is_admin(request)
 
@@ -79,22 +55,82 @@ def update_choice(request, choice_id: int, payload: ChoicesUpdateSchema):
     except ModelChoice.DoesNotExist:
         raise HttpError(404, "Choice not found")
 
-    for attr, value in payload.dict(exclude_unset=True).items():
-        setattr(choice, attr, value)
+    choice_data = {
+        "id": choice.id,
+        "question_id": choice.question.id,
+        "text": choice.text,
+        "is_correct": choice.is_correct,
+    }
+
+    return ChoicesSchema(**choice_data)
+
+
+@router.put("/{choice_id}/", response={200: ChoicesSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+def update_choice(request, choice_id: int, payload: ChoicesUpdateSchema):
+    """
+    Atualiza completamente uma alternativa pelo seu ID.
+    Apenas administradores têm permissão.
+    """
+    is_authenticated(request)
+    is_admin(request)
+
+    try:
+        choice = ModelChoice.objects.get(id=choice_id)
+    except ModelChoice.DoesNotExist:
+        raise HttpError(404, "Choice not found")
+
+    if payload.text is not None:
+        choice.text = payload.text
+    if payload.is_correct is not None:
+        choice.is_correct = payload.is_correct
+
     choice.save()
 
-    return ChoicesSchema.from_orm(choice)
+    choice_data = {
+        "id": choice.id,
+        "question_id": choice.question.id,
+        "text": choice.text,
+        "is_correct": choice.is_correct,
+    }
+
+    return ChoicesSchema(**choice_data)
 
 
-# Atualização parcial de uma alternativa
 @router.patch("/{choice_id}/", response={200: ChoicesSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def partial_update_choice(request, choice_id: int, payload: ChoicesUpdateSchema):
-    return update_choice(request, choice_id, payload)
+    """
+    Atualiza parcialmente uma alternativa pelo seu ID.
+    Apenas administradores têm permissão.
+    """
+    is_authenticated(request)
+    is_admin(request)
+
+    try:
+        choice = ModelChoice.objects.get(id=choice_id)
+    except ModelChoice.DoesNotExist:
+        raise HttpError(404, "Choice not found")
+
+    for attr, value in payload.model_dump(exclude_unset=True).items():
+        setattr(choice, attr, value)
+
+    choice.save()
+
+    choice_data = {
+        "id": choice.id,
+        "question_id": choice.question.id,
+        "text": choice.text,
+        "is_correct": choice.is_correct,
+    }
+
+    return ChoicesSchema(**choice_data)
 
 
-# Exclusão de uma alternativa
 @router.delete("/{choice_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_choice(request, choice_id: int):
+    """
+    Deleta uma alternativa pelo seu ID.
+    Apenas administradores têm permissão.
+    """
     is_authenticated(request)
     is_admin(request)
 
