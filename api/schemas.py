@@ -75,7 +75,8 @@ class QuestionSchema(BaseModel):
     id: int
     text: str
     created_at: datetime
-    choices: List[ChoicesSchema]  # Lista de alternativas associadas
+    exams: List[int]
+    choices: List[dict]  # Lista de alternativas associadas
 
     class Config:
         orm_mode = True

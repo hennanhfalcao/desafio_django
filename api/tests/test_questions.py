@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.models import User
-from api.models import ModelQuestion, ModelExam, ModelUserProfile, ModelExamQuestion
+from api.models import ModelQuestion, ModelExam, ModelUserProfile, ModelExamQuestion, ModelChoice
 
 
 class TestQuestionEndpoints(APITestCase):
@@ -38,6 +38,10 @@ class TestQuestionEndpoints(APITestCase):
         self.question2 = ModelQuestion.objects.create(text="Another Question")
         self.question3 = ModelQuestion.objects.create(text="Sample Question")
         ModelExamQuestion.objects.create(exam=self.exam1, question=self.question1)
+
+        # Criar alternativas
+        self.choice1 = ModelChoice.objects.create(question=self.question1, text="Choice 1", is_correct=True)
+        self.choice2 = ModelChoice.objects.create(question=self.question1, text="Choice 2", is_correct=False)
 
         # Login e tokens
         admin_login_response = self.client.post(
@@ -104,7 +108,7 @@ class TestQuestionEndpoints(APITestCase):
         self.assertEqual(len(response.json()), 2)
 
     # ============================
-    # Testes de obtenção de questão
+    # Testes de obtenção de questão individual
     # ============================
     def test_get_question_as_admin(self):
         response = self.client.get(f"/api/questions/{self.question1.id}/", **self.admin_headers)
@@ -155,3 +159,71 @@ class TestQuestionEndpoints(APITestCase):
     def test_delete_nonexistent_question(self):
         response = self.client.delete("/api/questions/9999/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ============================
+    # Testes de listagem de alternativas
+    # ============================
+    def test_list_choices_as_admin(self):
+        response = self.client.get(f"/api/questions/{self.question1.id}/choices/", **self.admin_headers)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()), 2)
+
+    def test_list_choices_as_participant(self):
+        response = self.client.get(f"/api/questions/{self.question1.id}/choices/", **self.participant_headers)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_choices_for_nonexistent_question(self):
+        response = self.client.get("/api/questions/9999/choices/", **self.admin_headers)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ============================
+    # Testes de vinculação de alternativas
+    # ============================
+    def test_add_choice_as_admin(self):
+        payload = {"question_id": self.question1.id, "text": "New Choice", "is_correct": False}
+        response = self.client.post(f"/api/questions/{self.question1.id}/choices/", payload, **self.admin_headers, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["text"], "New Choice")
+        self.assertFalse(response.json()["is_correct"])
+
+    def test_add_choice_exceeding_limit(self):
+        ModelChoice.objects.create(question=self.question1, text="Choice 3", is_correct=False)
+        ModelChoice.objects.create(question=self.question1, text="Choice 4", is_correct=False)
+
+        payload = {"question_id": self.question1.id, "text": "Exceeding Choice", "is_correct": False}
+        response = self.client.post(f"/api/questions/{self.question1.id}/choices/", payload, **self.admin_headers, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["detail"], "A question can have at most 4 choices")
+
+    # ============================
+    # Testes de desvinculação de alternativas
+    # ============================
+    def test_remove_choice_as_admin(self):
+        # Garanta que existam duas alternativas, uma correta e uma incorreta
+        choice_to_remove = ModelChoice.objects.create(question=self.question1, text="Extra Choice", is_correct=False)
+
+        # Certifique-se de que existe apenas uma alternativa correta
+        correct_choice = ModelChoice.objects.get(question=self.question1, is_correct=True)
+
+        # Tente remover a alternativa incorreta
+        response = self.client.delete(
+            f"/api/questions/{self.question1.id}/choices/{choice_to_remove.id}/",
+            **self.admin_headers
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verifique se a alternativa foi removida
+        self.assertFalse(ModelChoice.objects.filter(id=choice_to_remove.id).exists())
+
+        # Verifique se a alternativa correta ainda existe
+        self.assertTrue(ModelChoice.objects.filter(id=correct_choice.id).exists())
+
+        # Verifique que a questão ainda tem pelo menos 2 alternativas
+        self.assertGreaterEqual(ModelChoice.objects.filter(question=self.question1).count(), 2)
+
+    def test_remove_choice_below_minimum(self):
+        self.client.delete(f"/api/questions/{self.question1.id}/choices/{self.choice2.id}/", **self.admin_headers)
+
+        response = self.client.delete(f"/api/questions/{self.question1.id}/choices/{self.choice1.id}/", **self.admin_headers)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["detail"], "A question must have at least 2 choices")
