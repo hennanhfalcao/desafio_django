@@ -167,7 +167,7 @@ class TestUserEndpoints(APITestCase):
         """
         Testa a ordenação dos usuários com base no campo `username` em ordem decrescente.
         """
-        response = self.client.get('/api/users/?ordering=-username', **self.admin_headers)
+        response = self.client.get('/api/users/?order_by=-username', **self.admin_headers)
         self.assertEqual(response.status_code, 200)
 
         users = response.json()

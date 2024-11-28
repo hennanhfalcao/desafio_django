@@ -1,16 +1,19 @@
 from ninja import Schema
 from pydantic import EmailStr
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
-from typing import Optional
+
+from api.models import ModelExamQuestion
+
 
 class UserCreateSchema(BaseModel):
     username: str
     password: str
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     is_admin: bool
     is_participant: bool
+
 
 class UserSchema(BaseModel):
     id: int
@@ -35,73 +38,126 @@ class UserSchema(BaseModel):
 class UserUpdateSchema(BaseModel):
     username: Optional[str]
     password: Optional[str]
-    email: Optional[EmailStr]  # Adiciona validação de e-mail
+    email: Optional[EmailStr]
     is_admin: Optional[bool]
     is_participant: Optional[bool]
 
     class Config:
         orm_mode = True
-                
-class ExamCreateSchema(Schema):
+
+class ExamCreateSchema(BaseModel):
     name: str
 
-class ExamSchema(Schema):
+class ExamSchema(BaseModel):
     id: int
     name: str
     created_by_id: int
     created_at: datetime
 
-class ExamUpdateSchema(Schema):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ExamUpdateSchema(BaseModel):
     name: Optional[str]
 
-class QuestionUpdateSchema(Schema):
-    id: int
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ExamParticipantCreateSchema(BaseModel):
     exam_id: int
-    text: Optional[str]
-    
-class QuestionCreateSchema(Schema):
-    exam_id: int
-    text: str
+    user_id: int
 
-class QuestionSchema(Schema):
-    id: int
+class ExamParticipantSchema(BaseModel):
     exam_id: int
+    user_id: int
+    added_at: datetime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ExamQuestionCreateSchema(BaseModel):
+    exam_id: int
+    question_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ExamQuestionSchema(BaseModel):
+    exam_id: int
+    question_id: int
+    added_at: datetime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+class QuestionCreateSchema(BaseModel):
+    text: str
+    exams: Optional[List[int]] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+class QuestionSchema(BaseModel):
+    id: int
     text: str
     created_at: datetime
+    exams: List[int]  # Campo para os IDs dos exames
 
-class ChoicesCreateSchema(Schema):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+class QuestionUpdateSchema(BaseModel):
+    text: Optional[str] = None
+    exams: Optional[List[int]] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ChoicesCreateSchema(BaseModel):
     question_id: int
     text: str
     is_correct: bool
 
-class ChoicesSchema(Schema):
+class ChoicesSchema(BaseModel):
     id: int
     question_id: int
     text: str
     is_correct: bool
 
-class ParticipationCreateSchema(Schema):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ParticipationCreateSchema(BaseModel):
     exam_id: int
 
-class ParticipationSchema(Schema):
+class ParticipationSchema(BaseModel):
     id: int
     user: int
     exam: int
     started_at: datetime
-    finished_at: datetime = None
+    finished_at: Optional[datetime]
     score: float
 
-class AnswerCreateSchema(Schema):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class AnswerCreateSchema(BaseModel):
     participation_id: int
     question_id: int
     choice_id: int
 
-class AnswerSchema(Schema):
+class AnswerSchema(BaseModel):
     id: int
     participation_id: int
     question_id: int
     choice_id: int
-    answered_at: datetime    
+    answered_at: datetime
 
-class ErrorSchema(Schema):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+class ErrorSchema(BaseModel):
     detail: str

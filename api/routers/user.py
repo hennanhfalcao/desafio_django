@@ -30,7 +30,7 @@ def create_user(request, payload: UserCreateSchema):
 def list_users(
     request, 
     query: str = None, 
-    order_by: str = "id", 
+    order_by: str = "-username", 
     page: int = 1, 
     page_size: int = 10
 ):

@@ -43,8 +43,3 @@ def list_choices(request, query: str = None, question_id: int = None, order_by: 
 
 
     return choices[start:end]
-
-"""@router.get("/{choice_id}/", response=ChoicesSchema)
-def get_choice(request, choice_id: int):
-    try:
-        choice=ModelChoice.objects.get(id=choice_id)"""
