@@ -30,7 +30,7 @@ class UserSchema(BaseModel):
         )
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserUpdateSchema(BaseModel):
@@ -41,15 +41,23 @@ class UserUpdateSchema(BaseModel):
     is_participant: Optional[bool]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Exam Schemas
+
+class ExamUpdateSchema(BaseModel):
+    name: Optional[str]
+
+    class Config:
+        from_attributes=True
+
+
 class ExamSchema(BaseModel):
     id: int
     name: str
     created_by: UserSchema
     created_at: datetime
-    questions: List["QuestionSchema"]  # Relacionamento muitos-para-muitos
+    questions: Optional[List["QuestionSchema"]] # Relacionamento muitos-para-muitos
 
     @classmethod
     def model_validate(cls, obj):
@@ -67,6 +75,11 @@ class ExamCreateSchema(BaseModel):
 
 
 # Participation Schemas
+
+class ParticipationCreateSchema(BaseModel):
+    user_id: int
+    exam_id: int
+
 class ParticipationSchema(BaseModel):
     id: int
     user: UserSchema
