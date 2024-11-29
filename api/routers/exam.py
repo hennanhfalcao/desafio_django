@@ -1,7 +1,7 @@
 from ninja import Router
 from django.shortcuts import get_object_or_404
 from api.models import ModelExam, ModelParticipation
-from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema
+from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema
 from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
 from ninja.errors import HttpError
 from django.db.models import Q
@@ -157,3 +157,55 @@ def delete_participation(request, exam_id: int, user_id: int):
     ModelParticipation.objects.filter(user=user, exam=exam).delete()
 
     return 204, None
+
+@router.get("/{exam_id}/participants/{user_id}/", response={200: ParticipationSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})    
+def get_participation_details(request, exam_id: int, user_id: int):
+    """Obtem detalhes de uma participação de um usuário em uma prova pelo ID do usuário e o ID da prova.
+    Apenas administradores podem obter detalhes de participações."""
+    is_authenticated(request)
+    is_admin(request)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(404, "Usuário nao encontrado")
+
+    try:
+        exam = ModelExam.objects.get(id=exam_id)
+    except ModelExam.DoesNotExist:
+        raise HttpError(404, "Prova nao encontrada")
+
+    if not ModelParticipation.objects.filter(user=user, exam=exam).exists():
+        raise HttpError(404, "Participação nao encontrada")
+
+    return ParticipationSchema.model_validate(ModelParticipation.objects.get(user=user, exam=exam))
+
+@router.patch("/{exam_id}/participants/{user_id}/", response={200: ParticipationSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+def update_participation(request, exam_id: int, user_id: int, payload: ParticipationUpdateSchema):
+    """Atualiza uma participação de um usuário em uma prova pelo ID do usuário e o ID da prova.
+    Apenas administradores podem atualizar participações."""
+
+    is_authenticated(request)
+    is_admin(request)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(404, "Usuário nao encontrado")
+
+    try:
+        exam = ModelExam.objects.get(id=exam_id)
+    except ModelExam.DoesNotExist:
+        raise HttpError(404, "Prova nao encontrada")
+
+    if not ModelParticipation.objects.filter(user=user, exam=exam).exists():
+        raise HttpError(404, "Participação nao encontrada")
+
+    participation = ModelParticipation.objects.get(user=user, exam=exam)
+
+    for attr, value in payload.model_dump(exclude_unset=True).items():
+        setattr(participation, attr, value)
+
+    participation.save()
+
+    return 200, ParticipationSchema.model_validate(participation)

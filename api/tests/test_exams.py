@@ -1,8 +1,10 @@
+from datetime import datetime
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.models import User
 from api.models import ModelExam, ModelParticipation, ModelUserProfile
-
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_aware
 
 class TestExamEndpoints(APITestCase):
     def setUp(self):
@@ -32,6 +34,7 @@ class TestExamEndpoints(APITestCase):
         # Criação de provas
         self.exam1 = ModelExam.objects.create(name="Prova 1", created_by=self.admin_user)
         self.exam2 = ModelExam.objects.create(name="Prova 2", created_by=self.admin_user)
+
 
         # Registro do admin e participante
         admin_login_response = self.client.post(
@@ -126,6 +129,7 @@ class TestExamEndpoints(APITestCase):
     def test_create_participation_as_admin(self):
         payload = {"user_id": self.participant_user.id, "exam_id": self.exam1.id}
         response = self.client.post(f"/api/exams/{self.exam1.id}/participants/", payload, **self.admin_headers, format="json")
+        print(response.json())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()["user"]["id"], self.participant_user.id)
 
@@ -177,3 +181,111 @@ class TestExamEndpoints(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["detail"], "Prova nao encontrada")
+
+    def test_get_participation_details_as_admin(self):
+        participation = ModelParticipation.objects.create(
+            user=self.participant_user,
+            exam=self.exam1,
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),
+            finished_at=None,
+            score=0.0
+        )
+        
+        response = self.client.get(
+            f"/api/exams/{self.exam1.id}/participants/{self.participant_user.id}/",
+            **self.admin_headers
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["user"]["id"], self.participant_user.id)
+        self.assertEqual(response.json()["exam"]["id"], self.exam1.id)
+
+
+    def test_get_participation_details_as_participant(self):
+        participation = ModelParticipation.objects.create(
+            user=self.participant_user,
+            exam=self.exam1,
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),
+            finished_at=None,
+            score=0.0
+        )
+
+        response = self.client.get(
+            f"/api/exams/{self.exam1.id}/participants/{self.participant_user.id}/",
+            **self.participant_headers
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()["detail"], "Permission denied")
+
+
+    def test_update_participation_as_admin(self):
+        participation = ModelParticipation.objects.create(
+            user=self.participant_user,
+            exam=self.exam1,
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),  # Criação inicial
+            finished_at=None,
+            score=0.0
+        )
+        payload = {
+            "started_at": "2024-11-29T14:00:00Z",  # UTC
+            "finished_at": "2024-11-29T16:00:00Z",  # UTC
+            "score": 95.5
+        }
+        response = self.client.patch(
+            f"/api/exams/{self.exam1.id}/participants/{self.participant_user.id}/",
+            payload,
+            **self.admin_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Normalizar as datas recebidas no formato UTC para comparação
+        started_at_response = parse_datetime(response.json()["started_at"])
+        finished_at_response = parse_datetime(response.json()["finished_at"])
+
+        self.assertEqual(started_at_response, parse_datetime(payload["started_at"]))
+        self.assertEqual(finished_at_response, parse_datetime(payload["finished_at"]))
+        self.assertEqual(response.json()["score"], payload["score"])
+
+
+    def test_update_participation_as_participant(self):
+        participation = ModelParticipation.objects.create(
+            user=self.participant_user,
+            exam=self.exam1,
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),
+            finished_at=None,
+            score=0.0
+        )
+        payload = {"score": 50.0}
+        response = self.client.patch(
+            f"/api/exams/{self.exam1.id}/participants/{self.participant_user.id}/",
+            payload,
+            **self.participant_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()["detail"], "Permission denied")
+
+
+    def test_update_participation_with_invalid_user(self):
+        payload = {"score": 80.0}
+        response = self.client.patch(
+            f"/api/exams/{self.exam1.id}/participants/9999/",
+            payload,
+            **self.admin_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()["detail"], "Usuário nao encontrado")
+
+
+    def test_update_participation_with_invalid_exam(self):
+        payload = {"score": 80.0}
+        response = self.client.patch(
+            f"/api/exams/9999/participants/{self.participant_user.id}/",
+            payload,
+            **self.admin_headers,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()["detail"], "Prova nao encontrada")
+

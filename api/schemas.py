@@ -99,7 +99,12 @@ class ParticipationSchema(BaseModel):
             score=obj.score,
         )
 
+class ParticipationUpdateSchema(BaseModel):
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
+    score: Optional[float] = None
 
+    
 # Question Schemas
 class QuestionSchema(BaseModel):
     id: int
