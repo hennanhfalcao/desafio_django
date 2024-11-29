@@ -1,4 +1,3 @@
-from ninja import Schema
 from pydantic import EmailStr
 from datetime import datetime
 from typing import List, Optional
@@ -21,7 +20,7 @@ class UserSchema(BaseModel):
     is_participant: bool
 
     @classmethod
-    def from_orm(cls, obj):
+    def model_validate(cls, obj):
         return cls(
             id=obj.id,
             username=obj.username,
@@ -44,119 +43,27 @@ class UserUpdateSchema(BaseModel):
     class Config:
         orm_mode = True
 
-
-# Choice Schemas
-class ChoicesSchema(BaseModel):
-    id: int
-    question_id: int
-    text: str
-    is_correct: bool
-
-    class Config:
-        orm_mode = True
-
-
-class ChoicesCreateSchema(BaseModel):
-    question_id: int
-    text: str
-    is_correct: bool
-
-
-class ChoicesUpdateSchema(BaseModel):
-    text: Optional[str] = None
-    is_correct: Optional[bool] = None
-
-    class Config:
-        orm_mode = True
-
-
-# Question Schemas
-class QuestionSchema(BaseModel):
-    id: int
-    text: str
-    created_at: datetime
-    exams: List[int]
-    choices: List[dict]  # Lista de alternativas associadas
-
-    class Config:
-        orm_mode = True
-
-
-class QuestionCreateSchema(BaseModel):
-    text: str
-    exams: Optional[List[int]] = None
-
-    class Config:
-        orm_mode = True
-
-
-class QuestionUpdateSchema(BaseModel):
-    text: Optional[str] = None
-    exams: Optional[List[int]] = None
-
-    class Config:
-        orm_mode = True
-
-
 # Exam Schemas
 class ExamSchema(BaseModel):
     id: int
     name: str
     created_by: UserSchema
     created_at: datetime
-    participants: List["ExamParticipantSchema"]
-    questions: List["ExamQuestionSchema"]
+    questions: List["QuestionSchema"]  # Relacionamento muitos-para-muitos
 
-    class Config:
-        orm_mode = True
+    @classmethod
+    def model_validate(cls, obj):
+        return cls(
+            id=obj.id,
+            name=obj.name,
+            created_by=UserSchema.model_validate(obj.created_by),
+            created_at=obj.created_at,
+            questions=[QuestionSchema.model_validate(q) for q in obj.questions.all()],
+        )
 
 
 class ExamCreateSchema(BaseModel):
     name: str
-
-    class Config:
-        orm_mode = True
-
-
-class ExamUpdateSchema(BaseModel):
-    name: Optional[str]
-
-    class Config:
-        orm_mode = True
-
-
-# Intermediate Model Schemas
-class ExamParticipantSchema(BaseModel):
-    exam_id: int
-    user_id: int
-    added_at: datetime
-
-    class Config:
-        orm_mode = True
-
-
-class ExamParticipantCreateSchema(BaseModel):
-    exam_id: int
-    user_id: int
-
-    class Config:
-        orm_mode = True
-
-
-class ExamQuestionSchema(BaseModel):
-    exam_id: int
-    question: QuestionSchema  # QuestionSchema completo
-
-    class Config:
-        orm_mode = True
-
-
-class ExamQuestionCreateSchema(BaseModel):
-    exam_id: int
-    question_id: int
-
-    class Config:
-        orm_mode = True
 
 
 # Participation Schemas
@@ -168,12 +75,61 @@ class ParticipationSchema(BaseModel):
     finished_at: Optional[datetime]
     score: float
 
-    class Config:
-        orm_mode = True
+    @classmethod
+    def model_validate(cls, obj):
+        return cls(
+            id=obj.id,
+            user=UserSchema.model_validate(obj.user),
+            exam=ExamSchema.model_validate(obj.exam),
+            started_at=obj.started_at,
+            finished_at=obj.finished_at,
+            score=obj.score,
+        )
 
 
-class ParticipationCreateSchema(BaseModel):
-    exam_id: int
+# Question Schemas
+class QuestionSchema(BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    exams: List[ExamSchema]  # Relacionamento muitos-para-muitos
+
+    @classmethod
+    def model_validate(cls, obj):
+        return cls(
+            id=obj.id,
+            text=obj.text,
+            created_at=obj.created_at,
+            exams=[ExamSchema.model_validate(e) for e in obj.exams.all()],
+        )
+
+
+class QuestionCreateSchema(BaseModel):
+    text: str
+    exam_id: int  # ID do exame ao qual a questão pertence
+
+
+# Choice Schemas
+class ChoiceSchema(BaseModel):
+    id: int
+    text: str
+    is_correct: bool
+    question_id: int
+
+    @classmethod
+    def model_validate(cls, obj):
+        return cls(
+            id=obj.id,
+            text=obj.text,
+            is_correct=obj.is_correct,
+            question_id=obj.question.id,
+        )
+
+
+class ChoiceCreateSchema(BaseModel):
+    question_id: int
+    text: str
+    is_correct: bool
 
 
 # Answer Schemas
@@ -181,23 +137,18 @@ class AnswerSchema(BaseModel):
     id: int
     participation: ParticipationSchema
     question: QuestionSchema
-    choice: ChoicesSchema
-    correct_choice: Optional[ChoicesSchema]  # Adicionado para mostrar a resposta correta
+    choice: ChoiceSchema
     answered_at: datetime
 
     @classmethod
-    def from_orm(cls, obj):
+    def model_validate(cls, obj):
         return cls(
             id=obj.id,
-            participation=ParticipationSchema.from_orm(obj.participation),
-            question=QuestionSchema.from_orm(obj.question),
-            choice=ChoicesSchema.from_orm(obj.choice),
-            correct_choice=ChoicesSchema.from_orm(obj.question.get_correct_choice()),
+            participation=ParticipationSchema.model_validate(obj.participation),
+            question=QuestionSchema.model_validate(obj.question),
+            choice=ChoiceSchema.model_validate(obj.choice),
             answered_at=obj.answered_at,
         )
-
-    class Config:
-        orm_mode = True
 
 
 class AnswerCreateSchema(BaseModel):
@@ -206,6 +157,5 @@ class AnswerCreateSchema(BaseModel):
     choice_id: int
 
 
-# Error Schema
 class ErrorSchema(BaseModel):
-    detail: str
+    detail: str    

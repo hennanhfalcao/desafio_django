@@ -9,7 +9,7 @@ from ninja.errors import HttpError
 
 router = Router(tags=["Users"])
 
-@router.post("/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
+@router.post("/", response={201: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
 def create_user(request, payload: UserCreateSchema):
     """Cria um usuário com perfil"""
     is_authenticated(request)
@@ -24,7 +24,7 @@ def create_user(request, payload: UserCreateSchema):
         is_admin=payload.is_admin,
         is_participant=payload.is_participant
     )
-    return UserSchema.from_orm(user)
+    return 201, UserSchema.model_validate(user)
 
 @router.get("/", response={200: list[UserSchema], 401: ErrorSchema, 403: ErrorSchema})
 def list_users(
@@ -48,7 +48,7 @@ def list_users(
 
     users = paginate_queryset(users, page, page_size)
 
-    return [UserSchema.from_orm(user) for user in users]
+    return [UserSchema.model_validate(user) for user in users]
 
 @router.get("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_user_details(request, user_id: int):
@@ -58,8 +58,8 @@ def get_user_details(request, user_id: int):
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, ErrorSchema(detail="User not found"))
-    return UserSchema.from_orm(user)
+        raise HttpError(404, "User not found")
+    return UserSchema.model_validate(user)
 
 @router.patch("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def partial_update_user(request, user_id: int, data: UserUpdateSchema):
@@ -71,7 +71,7 @@ def partial_update_user(request, user_id: int, data: UserUpdateSchema):
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, {"detail": "User not found"})
+        raise HttpError(404, "User not found")
 
     for attr, value in data.model_dump(exclude_unset=True).items():
         if attr == "password":
@@ -88,7 +88,7 @@ def partial_update_user(request, user_id: int, data: UserUpdateSchema):
     user.save()
     profile.save()
 
-    return UserSchema.from_orm(user)
+    return UserSchema.model_validate(user)
 
 @router.put("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_user(request, user_id: int, data: UserUpdateSchema):
@@ -99,7 +99,7 @@ def update_user(request, user_id: int, data: UserUpdateSchema):
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, {"detail": "User not found"})
+        raise HttpError(404, "User not found")
 
     for attr, value in data.model_dump(exclude_unset=True).items():
         if attr == "password":
@@ -115,7 +115,7 @@ def update_user(request, user_id: int, data: UserUpdateSchema):
     profile.is_participant = profile_data.get("is_participant", profile.is_participant)
     profile.save()
 
-    return UserSchema.from_orm(user)
+    return UserSchema.model_validate(user)
 
 @router.delete("/{user_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_user(request, user_id: int):
@@ -125,6 +125,6 @@ def delete_user(request, user_id: int):
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, ErrorSchema(detail="User not found"))
+        raise HttpError(404, "User not found")
     user.delete()
     return 204, None

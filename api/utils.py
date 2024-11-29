@@ -30,11 +30,6 @@ def is_admin(request):
     if not getattr(request.user.profile, "is_admin", False):
         raise HttpError(403, "Permission denied")
 
-def paginate_and_order(queryset, order_by, page, page_size):
-    queryset = order_queryset(queryset, order_by)
-    queryset = paginate_queryset(queryset, page, page_size)
-    return queryset
-
 def order_queryset(queryset, order_by):
     """
     Ordena o queryset com base em um campo fornecido.

@@ -66,7 +66,7 @@ class TestUserEndpoints(APITestCase):
             "is_participant": True
         }
         response = self.client.post("/api/users/", payload, **self.admin_headers, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()["username"], "new_user")
 
     def test_create_user_as_participant(self):
