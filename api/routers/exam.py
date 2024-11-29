@@ -53,7 +53,7 @@ def get_exam_details(request, exam_id: int):
     
     return ExamSchema.model_validate(exam)
 
-@router.patch("patch/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.patch("/patch/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def partial_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     """Atualiza parcialmente uma prova por meio do seu ID"""
     is_authenticated(request)
@@ -66,7 +66,7 @@ def partial_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
 
     return ExamSchema.model_validate(exam)
 
-@router.put("put/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.put("/put/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     """Atualiza completamente uma prova por meio do seu ID"""
     is_authenticated(request)
@@ -131,7 +131,7 @@ def create_participation(request, exam_id: int, payload: ParticipationCreateSche
 
     participation = ModelParticipation.objects.create(user=user, exam=exam)
 
-    return 201, ParticipationSchema.model_validate(participation)
+    return 200, ParticipationSchema.model_validate(participation)
 
 
 @router.delete("/{exam_id}/participants/{user_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})

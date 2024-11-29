@@ -105,7 +105,8 @@ class QuestionSchema(BaseModel):
     id: int
     text: str
     created_at: datetime
-    exams: List[ExamSchema]  # Relacionamento muitos-para-muitos
+    choices: List["ChoiceSchema"]
+    exam_ids: List[int]
 
     @classmethod
     def model_validate(cls, obj):
@@ -113,21 +114,27 @@ class QuestionSchema(BaseModel):
             id=obj.id,
             text=obj.text,
             created_at=obj.created_at,
-            exams=[ExamSchema.model_validate(e) for e in obj.exams.all()],
+            choices=[ChoiceSchema.model_validate(c) for c in obj.choices.all()],
+            exam_ids=list(obj.exams.values_list("id", flat=True)),
         )
 
 
 class QuestionCreateSchema(BaseModel):
     text: str
-    exam_id: int  # ID do exame ao qual a questão pertence
+    choices: List["ChoiceCreateSchema"]
 
+class QuestionUpdateSchema(BaseModel):
+    text: Optional[str] = None
+    exam_ids: Optional[List[int]] = None 
+    choices: Optional[List["ChoiceUpdateSchema"]] = None 
+    
 
 # Choice Schemas
 class ChoiceSchema(BaseModel):
     id: int
     text: str
     is_correct: bool
-    question_id: int
+
 
     @classmethod
     def model_validate(cls, obj):
@@ -135,14 +142,16 @@ class ChoiceSchema(BaseModel):
             id=obj.id,
             text=obj.text,
             is_correct=obj.is_correct,
-            question_id=obj.question.id,
         )
 
 
 class ChoiceCreateSchema(BaseModel):
-    question_id: int
     text: str
     is_correct: bool
+
+class ChoiceUpdateSchema(BaseModel):
+    text: Optional[str] = None
+    is_correct: Optional[bool] = None
 
 
 # Answer Schemas

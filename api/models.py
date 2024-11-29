@@ -42,7 +42,8 @@ class ModelQuestion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.exam.name} - {self.text[:50]}"
+        exam_names = ", ".join(exam.name for exam in self.exams.all())
+        return f"Exames: {exam_names if exam_names else 'Nenhum'} - {self.text[:50]}"
 
 
 # Modelo de Escolhas
