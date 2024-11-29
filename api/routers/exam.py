@@ -131,7 +131,7 @@ def create_participation(request, exam_id: int, payload: ParticipationCreateSche
 
     participation = ModelParticipation.objects.create(user=user, exam=exam)
 
-    return 200, ParticipationSchema.model_validate(participation)
+    return 201, ParticipationSchema.model_validate(participation)
 
 
 @router.delete("/{exam_id}/participants/{user_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
