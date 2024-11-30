@@ -65,3 +65,20 @@ class ModelAnswer(models.Model):
 
     def __str__(self):
         return f"{self.participation.user.username} - {self.question.text[:50]} - {self.choice.text}"
+    
+
+
+class ModelRanking(models.Model):
+    exam = models.ForeignKey("ModelExam", on_delete=models.CASCADE, related_name="rankings")
+    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rankings")
+    score = models.FloatField()
+    position = models.PositiveIntegerField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("exam", "participant")
+        ordering = ["exam","position"]
+    
+    def __str__(self):
+        return f"Ranking {self.exam.name} - {self.participant.username} - {self.score} - {self.position}"

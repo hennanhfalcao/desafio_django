@@ -218,10 +218,16 @@ def finish_exam(request, exam_id: int):
     is_authenticated(request)
     
     try:
+        exam = ModelExam.objects.get(id=exam_id)
+    except ModelExam.DoesNotExist:
+        raise HttpError(404, "Prova nao encontrada")
+
+    try:
         participation = ModelParticipation.objects.get(user=request.user, exam__id=exam_id)
     except ModelParticipation.DoesNotExist:
         raise HttpError(404, "Participação nao encontrada")
 
+    
     if participation.finished_at:
         raise HttpError(403, "Prova ja finalizada")
     

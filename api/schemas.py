@@ -190,4 +190,11 @@ class AnswerUpdateSchema(BaseModel):
     choice_id: Optional[int] = None
 
 class ErrorSchema(BaseModel):
-    detail: str    
+    detail: str
+
+class RankingSchema(BaseModel):
+    exam_id: int
+    participant_id: int
+    participant_username: str
+    score: float
+    position: int
