@@ -104,7 +104,7 @@ class ParticipationUpdateSchema(BaseModel):
     finished_at: Optional[datetime] = None
     score: Optional[float] = None
 
-    
+
 # Question Schemas
 class QuestionSchema(BaseModel):
     id: int
@@ -183,6 +183,11 @@ class AnswerCreateSchema(BaseModel):
     question_id: int
     choice_id: int
 
+
+class AnswerUpdateSchema(BaseModel):
+    participation_id: Optional[int] = None
+    question_id: Optional[int] = None
+    choice_id: Optional[int] = None
 
 class ErrorSchema(BaseModel):
     detail: str    

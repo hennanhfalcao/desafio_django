@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import sys
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -93,7 +93,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'exam_manager.wsgi.application'
 
-
+TESTING = 'test' in sys.argv
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 

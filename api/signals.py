@@ -12,3 +12,6 @@ def manage_user_profile(sender, instance, created, **kwargs):
     else:
         if hasattr(instance, 'profile'):
             instance.profile.save()
+
+
+            
