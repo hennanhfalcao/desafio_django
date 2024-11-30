@@ -2,6 +2,7 @@ from ninja import Router
 from django.shortcuts import get_object_or_404
 from api.models import ModelExam, ModelParticipation
 from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema
+from api.tasks import calculate_score
 from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
 from ninja.errors import HttpError
 from django.db.models import Q
@@ -209,3 +210,36 @@ def update_participation(request, exam_id: int, user_id: int, payload: Participa
     participation.save()
 
     return 200, ParticipationSchema.model_validate(participation)
+
+@router.post("{exam_id}/finish/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+def finish_exam(request, exam_id: int):
+    """Finaliza uma prova para um participante e inicia o cálculo da pontuação."""
+
+    is_authenticated(request)
+    
+    try:
+        participation = ModelParticipation.objects.get(user=request.user, exam__id=exam_id)
+    except ModelParticipation.DoesNotExist:
+        raise HttpError(404, "Participação nao encontrada")
+
+    if participation.finished_at:
+        raise HttpError(403, "Prova ja finalizada")
+    
+    calculate_score.delay(participation.id)
+
+    return 200, {"detail":"Cálculo da pontuação iniciado"}
+
+@router.get("/{exam_id}/progress/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+def check_progress(request, exam_id: int):
+    """Verifica o progresso da correção da prova."""
+    is_authenticated(request)
+    try:
+        participation = ModelParticipation.objects.get(user=request.user, exam_id=exam_id)
+    except ModelParticipation.DoesNotExist:
+        raise HttpError(404, "Participação não encontrada")
+    
+    if participation.finished_at:
+        return {"status": "completed", "score": participation.score}
+    else:
+        return {"status": "in_progress"}
+
