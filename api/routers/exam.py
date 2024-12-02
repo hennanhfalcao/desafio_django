@@ -14,7 +14,9 @@ router = Router(tags=["Exams"])
 @router.post("/", response={201: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
 def create_exam(request, payload: ExamCreateSchema):
     """Cria uma prova
-    Apenas administradores podem criar provas."""
+    Apenas administradores podem criar provas.
+    Crie provas apenas com o nome e, após inseridas as questões no banco de dados. faça o link entre as entidades pela rota /api/questions/{question_id}/link-exam/{exam_id}/ 
+    """
     is_authenticated(request)
     is_admin(request)
 
@@ -23,7 +25,10 @@ def create_exam(request, payload: ExamCreateSchema):
 
 @router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
 def list_exams(request, query: str = None, order_by: str = "-name", page: int = 1, page_size: int = 10):
-    """Lista todas as provas com busca, ordenação e paginação opcionais."""
+    """Lista todas as provas com busca, ordenação e paginação opcionais.
+    É possível ordená-las por meio do campo created_at por meio da rota: /api/exams/?order_by=-name
+    A páginação é feita por meio da rota: /api/exams/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/exams/?query="""
     is_authenticated(request)
     is_admin(request)
 

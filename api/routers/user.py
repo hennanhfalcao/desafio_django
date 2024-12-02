@@ -11,7 +11,14 @@ router = Router(tags=["Users"])
 
 @router.post("/", response={201: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 422: ErrorSchema})
 def create_user(request, payload: UserCreateSchema):
-    """Cria um usuário com perfil"""
+    """Cria um usuário com perfil
+    Para criar um usuário, primeiramente, crie um superuser com o comando:
+    python manage.py createsuperuser.
+    Insira os dados requisitados.
+    Envie uma requisição POST para /api/token/ passando o username e a senha para obter o token de autenticação.
+    Copie a resposta e utilize o token de acesso na cabeça da requisição.
+    Authorization: Bearer -token-
+    Aí sim será possível criar um usuário por meio dessa rota."""
     is_authenticated(request)
     is_admin(request)
     user = User.objects.create_user(
@@ -33,6 +40,10 @@ def list_users(
 ):
     """
     Lista todos os usuários com busca, ordenação e paginação opcionais.
+    É possível ordená-los por meio do campo username por meio da rota: /api/users/?order_by=-username
+    A páginação é feita por meio da rota: /api/users/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/users/?query=
+    Apenas administradores podem ver a lista de usuários.
     """
     is_authenticated(request)
     is_admin(request)
@@ -49,7 +60,8 @@ def list_users(
 
 @router.get("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_user_details(request, user_id: int):
-    """Recupera detalhes do usuário por meio do ID."""
+    """Recupera detalhes do usuário por meio do ID.
+    Apenas administradores podem ver os detalhes de um usuário."""
     is_authenticated(request)
     is_admin(request)
     try:
@@ -60,7 +72,8 @@ def get_user_details(request, user_id: int):
 
 @router.patch("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def partial_update_user(request, user_id: int, payload: UserUpdateSchema):
-    """Atualiza parcialmente um usuário por meio do seu ID"""
+    """Atualiza parcialmente um usuário por meio do seu ID"
+    Apenas administradores podem atualizar um usuário."""
     
     is_authenticated(request)
     is_admin(request)
@@ -79,12 +92,13 @@ def partial_update_user(request, user_id: int, payload: UserUpdateSchema):
 
 @router.delete("/{user_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_user(request, user_id: int):
-    """Deleta um usuário pelo ID."""
+    """Deleta um usuário pelo ID.
+    Apenas administradores podem deletar usuários."""
     is_authenticated(request)
     is_admin(request)
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, "User not found")
+        raise HttpError(404, "Usuário não encontrado")
     user.delete()
     return 204, None

@@ -28,5 +28,10 @@ docker-compose up
 docker-compose exec web python manage.py makemigrations api
 docker-compose exec web python manage.py migrate
 
+# Crie um superusuário
+python manage.py createsuperuser
+
+# Autentique-o via Insomnia ou Postman passando username e senha no corpo da requisição feita para a rota /api/token/ 
+
 # Para rodar os testes unitários
 python manage.py test api.tests

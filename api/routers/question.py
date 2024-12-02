@@ -18,6 +18,8 @@ def create_question(request, payload: QuestionCreateSchema):
     """
     Cria uma questão e insere no banco de dados.
     Apenas administradores tem permissão para criar questões.
+    Após criar uma questão, é possível linká-la a uma prova por meio da rota /api/questions/{question_id}/link-exam/{exam_id}/
+    Para criar as questões insira as alternativas. Consulte os schemas para maiores detalhes.
     """
 
     is_authenticated(request)
@@ -42,6 +44,9 @@ def list_questions(request,
                 ):
     """
     Lista todas as questões com busca, ordenação e paginação opcionais.
+    É possível ordená-las por meio do campo created_at por meio da rota: /api/questions/?order_by=-created_at
+    A páginação é feita por meio da rota: /api/questions/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/questions/?query=
     """
     is_authenticated(request)
     is_admin(request)
@@ -173,6 +178,7 @@ def link_question_to_exam(request, question_id: int, exam_id: int):
     """
     Vincula uma questão a uma prova.
     Apenas administradores tem permissão
+    O retorno é a questão com o campo de provas relacionadas atualizado.
     """
     is_authenticated(request)
     is_admin(request)
@@ -187,7 +193,8 @@ def link_question_to_exam(request, question_id: int, exam_id: int):
 def unlink_question_from_exam(request, question_id: int, exam_id: int):
     """
     Desvincula uma questão de uma prova.
-    Apenas administradores tem permissão
+    Apenas administradores tem permissão.
+    O retorno é a questão com o campo de provas relacionadas atualizado.
     """
     is_authenticated(request)
     is_admin(request)
