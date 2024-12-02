@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from ninja.errors import HttpError
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -47,3 +48,11 @@ def paginate_queryset(queryset, page, page_size):
     start = (page - 1) * page_size
     end = start + page_size
     return queryset[start:end]
+
+def clear_list_exams_cache():
+    """
+    Limpa todos os caches relacionados ao endpoint de listagem de provas.
+    """
+    keys = cache.keys("list_exams:*")  # Padrão das chaves usadas no cache
+    for key in keys:
+        cache.delete(key)

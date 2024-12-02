@@ -1,9 +1,10 @@
 from ninja import Router
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from api.models import ModelExam, ModelParticipation
 from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema
 from api.tasks import calculate_score
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
+from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_exams_cache
 from ninja.errors import HttpError
 from django.db.models import Q
 from django.contrib.auth import get_user_model
@@ -21,6 +22,7 @@ def create_exam(request, payload: ExamCreateSchema):
     is_admin(request)
 
     exam = ModelExam.objects.create(name=payload.name, created_by=request.user)
+    clear_list_exams_cache()
     return 201, ExamSchema.model_validate(exam)
 
 @router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
@@ -31,6 +33,13 @@ def list_exams(request, query: str = None, order_by: str = "-name", page: int = 
     A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/exams/?query="""
     is_authenticated(request)
     is_admin(request)
+
+    cache_key = f"list_exams:{query}:{order_by}:{page}:{page_size}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        print(f"Cache hit for key: {cache_key}")
+        return cached_data
 
     try:    
         exams = ModelExam.objects.all()
@@ -44,7 +53,9 @@ def list_exams(request, query: str = None, order_by: str = "-name", page: int = 
 
     exams = paginate_queryset(exams, page, page_size)
 
-    return [ExamSchema.model_validate(exam) for exam in exams]
+    results = [ExamSchema.model_validate(exam) for exam in exams]
+    cache.set(cache_key, results, timeout=300)
+    return results
 
 
 @router.get("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
@@ -70,7 +81,7 @@ def partial_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     for attr, value in payload.model_dump(exclude_unset=True).items():
         setattr(exam, attr, value)
     exam.save()
-
+    clear_list_exams_cache()
     return ExamSchema.model_validate(exam)
 
 @router.put("/put/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
@@ -82,7 +93,7 @@ def update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     exam = get_object_or_404(ModelExam, id=exam_id)
     exam.name = payload.name
     exam.save()
-
+    clear_list_exams_cache()
     return ExamSchema.model_validate(exam)
 
 @router.delete("/{exam_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
@@ -98,7 +109,7 @@ def delete_exam(request, exam_id: int):
         raise HttpError(404, "Prova não encontrada")
 
     exam.delete()
-
+    clear_list_exams_cache()
     return 204, None
 
 @router.get("/{exam_id}/participants/", response={200: list[ParticipationSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
