@@ -1,37 +1,17 @@
 # desafio_django
 Desenvolvimento de uma Web Service RESTful para gerenciamento de provas com questões de múltiplas escolhas. 
 
-# Criar o ambiente virtual
-python3 -m venv .venv
-
-# Ativar o ambiente virtual (Linux/macOS)
-source venv/bin/activate
-
-# Ativar o ambiente virtual (Windows)
-.venv\Scripts\activate
-
-# Instalar as dependências usando o Poetry
-poetry install
-
-# Rodar o servidor Django sem o Docker
-poetry run python manage.py runserver
-
-# Para executar as migrações sem o docker
-python manage.py makemigrations
-python manage.py migrate
-
-# Para executar o projeto via Docker
+# Para executar o projeto via Docker, todos os comandos necessários para a inicialização da aplicação no servidor serão executados, incluindo instalação de dependências via poetry. Basta executar os comandos:
 docker-compose build
 docker-compose up
 
-# Executar as migrações localmente caso a pasta migrations não esteja presente
-docker-compose exec web python manage.py makemigrations api
-docker-compose exec web python manage.py migrate
-
-# Crie um superusuário
+# Crie um superusuário em outro terminal com o servidor rodando
 python manage.py createsuperuser
 
-# Autentique-o via Insomnia ou Postman passando username e senha no corpo da requisição feita para a rota /api/token/ 
+# Autentique-o via Insomnia ou Postman passando username e senha no corpo da requisição feita para a rota http://127.0.0.1:8000/api/token/ ou apenas acessando a rota e passando os parâmetros no formulário gerado automaticamente pelo DRF
 
 # Para rodar os testes unitários
 python manage.py test api.tests
+
+# Para visualizar documentação, basta executar o projeto via docker e acessar a rota:
+http://127.0.0.1:8000/api/docs 
