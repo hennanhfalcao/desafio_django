@@ -1,7 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
-from api.models import ModelQuestion, ModelChoice, ModelExam, ModelUserProfile
+from api.models import ModelQuestion, ModelChoice, ModelExam
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class TestQuestionEndpoints(APITestCase):
@@ -10,10 +12,7 @@ class TestQuestionEndpoints(APITestCase):
         self.admin_user = User.objects.create_user(
             username="admin",
             password="admin123",
-            email="admin@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.admin_user,
+            email="admin@example.com",
             is_admin=True,
             is_participant=False
         )
@@ -21,32 +20,28 @@ class TestQuestionEndpoints(APITestCase):
         self.participant_user = User.objects.create_user(
             username="participant",
             password="participant123",
-            email="participant@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.participant_user,
+            email="participant@example.com",
             is_admin=False,
             is_participant=True
         )
 
-        # Criação de provas
+
         self.exam1 = ModelExam.objects.create(name="Prova 1", created_by=self.admin_user)
         self.exam2 = ModelExam.objects.create(name="Prova 2", created_by=self.admin_user)
 
-        # Criação de questões
         self.question1 = ModelQuestion.objects.create(text="Questão 1")
         self.question2 = ModelQuestion.objects.create(text="Questão 2")
         self.question1.exams.add(self.exam1)
 
-        # Login do admin
+
         admin_login_response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "admin", "password": "admin123"},
             format="json"
         )
 
         self.admin_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access')}"
         }
 
     def test_create_question(self):

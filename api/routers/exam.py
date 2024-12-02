@@ -6,7 +6,8 @@ from api.tasks import calculate_score
 from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
 from ninja.errors import HttpError
 from django.db.models import Q
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 router = Router(tags=["Exams"])
 
@@ -49,7 +50,7 @@ def get_exam_details(request, exam_id: int):
 
     exam = get_object_or_404(ModelExam, id=exam_id)
 
-    if not request.user.profile.is_admin and not ModelParticipation.objects.filter(user=request.user, exam__id=exam_id).exists():   
+    if not request.user.is_admin and not ModelParticipation.objects.filter(user=request.user, exam__id=exam_id).exists():   
         raise HttpError(403, "Você não tem permissão para acessar os detalhes desta prova")
     
     return ExamSchema.model_validate(exam)

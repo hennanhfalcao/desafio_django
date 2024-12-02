@@ -5,7 +5,9 @@ from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSch
 from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
 from ninja.errors import HttpError
 from django.db.models import Q
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 router = Router(tags=["Answers"])
 
@@ -17,7 +19,7 @@ def create_answer(request, payload: AnswerCreateSchema):
 
     is_authenticated(request)
 
-    if request.user.profile.is_admin:
+    if request.user.is_admin:
         raise HttpError(403, "Apenas participantes podem responder questões.")
     
     participation = get_object_or_404(ModelParticipation, id=payload.participation_id, user=request.user)

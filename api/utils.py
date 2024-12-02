@@ -3,6 +3,10 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from ninja.errors import HttpError
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 def generate_jwt(user):
     payload = {
@@ -27,7 +31,7 @@ def is_authenticated(request):
         raise HttpError(401, "Authentication required")
 
 def is_admin(request):
-    if not getattr(request.user.profile, "is_admin", False):
+    if not getattr(request.user, "is_admin", False):
         raise HttpError(403, "Permission denied")
 
 def order_queryset(queryset, order_by):

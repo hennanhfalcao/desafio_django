@@ -1,7 +1,8 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
-from api.models import ModelUserProfile
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class TestUserEndpoints(APITestCase):
@@ -10,10 +11,7 @@ class TestUserEndpoints(APITestCase):
         self.admin_user = User.objects.create_user(
             username="admin",
             password="admin123",
-            email="admin@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.admin_user,
+            email="admin@example.com",
             is_admin=True,
             is_participant=False
         )
@@ -21,10 +19,7 @@ class TestUserEndpoints(APITestCase):
         self.participant_user = User.objects.create_user(
             username="participant",
             password="participant123",
-            email="participant@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.participant_user,
+            email="participant@example.com",
             is_admin=False,
             is_participant=True
         )
@@ -37,24 +32,24 @@ class TestUserEndpoints(APITestCase):
             )
         
         for user in User.objects.all():
-            ModelUserProfile.objects.get_or_create(user=user)
+            User.objects.get_or_create(username=user.username, email=user.email)
 
         admin_login_response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "admin", "password": "admin123"},
             format="json"
         )
         participant_login_response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "participant", "password": "participant123"},
             format="json"
         )
 
         self.admin_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access')}"
         }
         self.participant_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {participant_login_response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {participant_login_response.json().get('access')}"
         }
 
     def test_create_user_as_admin(self):
@@ -105,7 +100,7 @@ class TestUserEndpoints(APITestCase):
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["email"], "updated_email@example.com")
+        self.assertEqual(response.json()["username"], "updated_username")
 
     def test_partial_update_user_with_invalid_data(self):
         payload = {"email": "invalid-email"}  

@@ -1,7 +1,10 @@
 import jwt
 from django.conf import settings
 from django.utils.functional import SimpleLazyObject
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def get_user_from_token(request):
     auth_header = request.headers.get('Authorization')

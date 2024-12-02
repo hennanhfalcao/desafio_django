@@ -1,12 +1,16 @@
 from datetime import datetime
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
-from api.models import ModelExam, ModelParticipation, ModelUserProfile
+from api.models import ModelExam, ModelParticipation
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import make_aware
 from unittest.mock import patch
 from api.tasks import calculate_score
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 class TestExamEndpoints(APITestCase):
     def setUp(self):
@@ -14,10 +18,7 @@ class TestExamEndpoints(APITestCase):
         self.admin_user = User.objects.create_user(
             username="admin",
             password="admin123",
-            email="admin@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.admin_user,
+            email="admin@example.com",
             is_admin=True,
             is_participant=False
         )
@@ -25,36 +26,31 @@ class TestExamEndpoints(APITestCase):
         self.participant_user = User.objects.create_user(
             username="participant",
             password="participant123",
-            email="participant@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.participant_user,
+            email="participant@example.com",
             is_admin=False,
             is_participant=True
         )
 
-        # Criação de provas
         self.exam1 = ModelExam.objects.create(name="Prova 1", created_by=self.admin_user)
         self.exam2 = ModelExam.objects.create(name="Prova 2", created_by=self.admin_user)
 
 
-        # Registro do admin e participante
         admin_login_response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "admin", "password": "admin123"},
             format="json"
         )
         participant_login_response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "participant", "password": "participant123"},
             format="json"
         )
 
         self.admin_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {admin_login_response.json().get('access')}"
         }
         self.participant_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {participant_login_response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {participant_login_response.json().get('access')}"
         }
 
     def test_create_exam_as_admin(self):
@@ -240,7 +236,6 @@ class TestExamEndpoints(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Normalizar as datas recebidas no formato UTC para comparação
         started_at_response = parse_datetime(response.json()["started_at"])
         finished_at_response = parse_datetime(response.json()["finished_at"])
 
@@ -292,9 +287,8 @@ class TestExamEndpoints(APITestCase):
         self.assertEqual(response.json()["detail"], "Prova nao encontrada")
 
 
-    @patch("api.tasks.calculate_score.delay")  # Mocka a tarefa Celery
+    @patch("api.tasks.calculate_score.delay") 
     def test_finish_exam_success(self, mock_calculate_score):
-        # Certifica que a participação não existe antes de criá-la
         participation, created = ModelParticipation.objects.get_or_create(user=self.participant_user, exam=self.exam1)
 
         response = self.client.post(
@@ -306,7 +300,6 @@ class TestExamEndpoints(APITestCase):
         mock_calculate_score.assert_called_once_with(participation.id)
 
     def test_finish_exam_already_completed(self):
-        # Marca a participação como finalizada, se ainda não existir
         participation, created = ModelParticipation.objects.get_or_create(
             user=self.participant_user,
             exam=self.exam1,
@@ -321,7 +314,6 @@ class TestExamEndpoints(APITestCase):
         self.assertEqual(response.json()["detail"], "Prova ja finalizada")
 
     def test_finish_exam_no_participation(self):
-        # Certifica-se de que nenhuma participação existe para esse usuário e prova
         ModelParticipation.objects.filter(user=self.participant_user, exam=self.exam1).delete()
 
         response = self.client.post(
@@ -332,7 +324,6 @@ class TestExamEndpoints(APITestCase):
         self.assertEqual(response.json()["detail"], "Participação nao encontrada")
 
     def test_check_progress_in_progress(self):
-        # Cria uma participação que ainda está em progresso, se necessário
         ModelParticipation.objects.get_or_create(user=self.participant_user, exam=self.exam1)
 
         response = self.client.get(
@@ -343,7 +334,6 @@ class TestExamEndpoints(APITestCase):
         self.assertEqual(response.json()["status"], "in_progress")
 
     def test_check_progress_completed(self):
-        # Cria uma participação finalizada com pontuação, se necessário
         participation, created = ModelParticipation.objects.get_or_create(
             user=self.participant_user,
             exam=self.exam1,
@@ -362,7 +352,6 @@ class TestExamEndpoints(APITestCase):
         self.assertEqual(response.json()["score"], participation.score)
 
     def test_check_progress_no_participation(self):
-        # Certifica-se de que nenhuma participação existe para esse usuário e prova
         ModelParticipation.objects.filter(user=self.participant_user, exam=self.exam1).delete()
 
         response = self.client.get(

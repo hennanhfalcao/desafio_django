@@ -1,11 +1,11 @@
 from ninja import Router
-from django.contrib.auth.models import User
 from django.db.models import Q
-from api.models import ModelUserProfile
 from api.schemas import UserSchema, UserCreateSchema, UserUpdateSchema, ErrorSchema
 from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
 from ninja.errors import HttpError
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 router = Router(tags=["Users"])
 
@@ -17,10 +17,7 @@ def create_user(request, payload: UserCreateSchema):
     user = User.objects.create_user(
         username=payload.username,
         password=payload.password,
-        email=payload.email
-    )
-    ModelUserProfile.objects.create(
-        user=user,
+        email=payload.email,
         is_admin=payload.is_admin,
         is_participant=payload.is_participant
     )
@@ -58,11 +55,11 @@ def get_user_details(request, user_id: int):
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        raise HttpError(404, "User not found")
+        raise HttpError(404, "Usuário não encontrado")
     return UserSchema.model_validate(user)
 
 @router.patch("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
-def partial_update_user(request, user_id: int, data: UserUpdateSchema):
+def partial_update_user(request, user_id: int, payload: UserUpdateSchema):
     """Atualiza parcialmente um usuário por meio do seu ID"""
     
     is_authenticated(request)
@@ -70,52 +67,15 @@ def partial_update_user(request, user_id: int, data: UserUpdateSchema):
 
     try:
         user = User.objects.get(id=user_id)
+        for attr, value in payload.model_dump(exclude_unset=True).items():
+            if attr == "password":
+                user.set_password(value)
+            else:
+                setattr(user, attr, value)
+            user.save()
+            return UserSchema.model_validate(user)    
     except User.DoesNotExist:
-        raise HttpError(404, "User not found")
-
-    for attr, value in data.model_dump(exclude_unset=True).items():
-        if attr == "password":
-            user.set_password(value)
-        else:
-            setattr(user, attr, value)
-
-    profile_data = data.model_dump(exclude_unset=True)
-    profile = user.profile
-    if "is_admin" in profile_data:
-        profile.is_admin = profile_data["is_admin"]
-    if "is_participant" in profile_data:
-        profile.is_participant = profile_data["is_participant"]
-    user.save()
-    profile.save()
-
-    return UserSchema.model_validate(user)
-
-@router.put("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
-def update_user(request, user_id: int, data: UserUpdateSchema):
-    """Atualiza completamente um usuário por meio do seu ID"""
-    is_authenticated(request)
-    is_admin(request)
-
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        raise HttpError(404, "User not found")
-
-    for attr, value in data.model_dump(exclude_unset=True).items():
-        if attr == "password":
-            user.set_password(value)
-        else:
-            setattr(user, attr, value)
-
-    user.save()
-
-    profile_data = data.model_dump(exclude_unset=True)
-    profile = user.profile
-    profile.is_admin = profile_data.get("is_admin", profile.is_admin)
-    profile.is_participant = profile_data.get("is_participant", profile.is_participant)
-    profile.save()
-
-    return UserSchema.model_validate(user)
+        raise HttpError(404, "Usuário não encontrado")
 
 @router.delete("/{user_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_user(request, user_id: int):

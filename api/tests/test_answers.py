@@ -1,41 +1,33 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
 from api.models import (
     ModelExam,
     ModelParticipation,
     ModelQuestion,
     ModelChoice,
     ModelAnswer,
-    ModelUserProfile,
 )
-
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class TestAnswerEndpoints(APITestCase):
     def setUp(self):
-        # Criação de usuário participante
         self.participant_user = User.objects.create_user(
             username="participant",
             password="participant123",
-            email="participant@example.com"
-        )
-        ModelUserProfile.objects.create(
-            user=self.participant_user,
+            email="participant@example.com",
             is_admin=False,
             is_participant=True
         )
 
-        # Criação de prova
         self.exam = ModelExam.objects.create(
             name="Prova 1",
             created_by=self.participant_user
         )
 
-        # Criação de questão e associação à prova
         self.question = ModelQuestion.objects.create(text="Questão 1")
         self.exam.questions.add(self.question)  # Associa a questão ao exame
 
-        # Criação de escolhas
         self.choice_correct = ModelChoice.objects.create(
             question=self.question,
             text="Opção Correta",
@@ -47,24 +39,22 @@ class TestAnswerEndpoints(APITestCase):
             is_correct=False
         )
 
-        # Criação de participação
         self.participation = ModelParticipation.objects.create(
             user=self.participant_user,
             exam=self.exam
         )
 
-        # Login do participante
+
         response = self.client.post(
-            "/api/auth/login/",
+            "/api/token/",
             {"username": "participant", "password": "participant123"},
             format="json"
         )
         self.participant_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {response.json().get('access_token')}"
+            "HTTP_AUTHORIZATION": f"Bearer {response.json().get('access')}"
         }
 
     def test_list_answers(self):
-        # Criação de resposta
         answer = ModelAnswer.objects.create(
             participation=self.participation,
             question=self.question,
@@ -98,7 +88,7 @@ class TestAnswerEndpoints(APITestCase):
         payload = {
             "participation_id": self.participation.id,
             "question_id": self.question.id,
-            "choice_id": 9999  # Escolha inválida
+            "choice_id": 9999
         }
         response = self.client.post(
             "/api/answers/",
@@ -130,7 +120,7 @@ class TestAnswerEndpoints(APITestCase):
             question=self.question,
             choice=self.choice_correct
         )
-        payload = {"choice_id": 9999}  # Escolha inválida
+        payload = {"choice_id": 9999} 
         response = self.client.patch(
             f"/api/answers/patch/{answer.id}/",
             payload,

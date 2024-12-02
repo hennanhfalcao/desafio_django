@@ -25,8 +25,8 @@ class UserSchema(BaseModel):
             id=obj.id,
             username=obj.username,
             email=obj.email,
-            is_admin=obj.profile.is_admin,
-            is_participant=obj.profile.is_participant,
+            is_admin=obj.is_admin,
+            is_participant=obj.is_participant,
         )
 
     class Config:

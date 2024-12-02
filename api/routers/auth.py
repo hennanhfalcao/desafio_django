@@ -2,7 +2,9 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 from django.contrib.auth import authenticate
 from api.utils import generate_jwt
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 router = Router(tags=["Authentication"])
 
 class LoginSchema(Schema):
