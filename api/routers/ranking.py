@@ -9,7 +9,10 @@ router = Router(tags=["Ranking"])
 
 @router.get("/{exam_id}/ranking/", response={200: list[RankingSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_ranking(request, exam_id: int):
-    """Obtem o ranking de uma prova."""
+    """
+    Obtem o ranking de uma prova.
+    Apenas administradores tem permissão
+    """
 
     is_authenticated(request)
     is_admin(request)

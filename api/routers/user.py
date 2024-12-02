@@ -72,8 +72,8 @@ def partial_update_user(request, user_id: int, payload: UserUpdateSchema):
                 user.set_password(value)
             else:
                 setattr(user, attr, value)
-            user.save()
-            return UserSchema.model_validate(user)    
+        user.save()
+        return UserSchema.model_validate(user)        
     except User.DoesNotExist:
         raise HttpError(404, "Usuário não encontrado")
 
