@@ -22,4 +22,14 @@ def get_ranking(request, exam_id: int):
     if not rankings.exists():
         raise HttpError(404, "Ranking não encontrado")
     
-    return [RankingSchema.model_validate(ranking) for ranking in rankings]
+    return [
+    RankingSchema.model_validate({
+        "id": ranking.id,
+        "exam_id": ranking.exam_id,
+        "participant_id": ranking.participant.id,
+        "participant_username": ranking.participant.username,
+        "score": ranking.score,
+        "position": ranking.position,
+    })
+    for ranking in rankings
+    ]   
