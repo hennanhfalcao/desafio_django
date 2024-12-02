@@ -1,6 +1,8 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: >
       sh -c "python manage.py makemigrations &&
              python manage.py migrate &&
@@ -18,7 +20,9 @@ services:
       - "6379:6379"
 
   celery:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sh -c "celery -A exam_manager worker --loglevel=info"
     volumes:
       - .:/app
@@ -26,7 +30,9 @@ services:
       - redis
 
   celery-beat:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sh -c "celery -A exam_manager beat --loglevel=info"
     volumes:
       - .:/app
