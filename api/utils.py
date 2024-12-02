@@ -49,10 +49,18 @@ def paginate_queryset(queryset, page, page_size):
     end = start + page_size
     return queryset[start:end]
 
+
+CACHE_KEY_SET = "list_exam_keys"
+
+def add_cache_key(key):
+    """Adiciona uma chave ao conjunto de chaves do cache."""
+    keys = cache.get(CACHE_KEY_SET, set())
+    keys.add(key)
+    cache.set(CACHE_KEY_SET, keys, timeout=None)
+
 def clear_list_exams_cache():
-    """
-    Limpa todos os caches relacionados ao endpoint de listagem de provas.
-    """
-    keys = cache.keys("list_exams:*")  # Padrão das chaves usadas no cache
+    """Limpa todas as chaves relacionadas ao cache de listagem de provas."""
+    keys = cache.get(CACHE_KEY_SET, set())
     for key in keys:
         cache.delete(key)
+    cache.delete(CACHE_KEY_SET)

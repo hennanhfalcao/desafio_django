@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from api.models import ModelExam, ModelParticipation
 from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema
 from api.tasks import calculate_score
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_exams_cache
+from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_exams_cache, add_cache_key
 from ninja.errors import HttpError
 from django.db.models import Q
 from django.contrib.auth import get_user_model
@@ -55,6 +55,7 @@ def list_exams(request, query: str = None, order_by: str = "-name", page: int = 
 
     results = [ExamSchema.model_validate(exam) for exam in exams]
     cache.set(cache_key, results, timeout=300)
+    add_cache_key(cache_key)
     return results
 
 

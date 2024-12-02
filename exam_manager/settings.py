@@ -197,3 +197,10 @@ CACHES = {
         "KEY_PREFIX": "desafio_django"  # Prefixo para evitar conflitos entre apps
     }
 }
+
+if 'test' in sys.argv:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
