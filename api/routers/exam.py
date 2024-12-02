@@ -118,7 +118,9 @@ def list_participants(request, exam_id: int):
 @router.post("/{exam_id}/participants/", response={201: ParticipationSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def create_participation(request, exam_id: int, payload: ParticipationCreateSchema):
 
-    """Cria uma nova participação para um usuário em uma prova pelo ID do usuário e o ID da prova."""
+    """Cria uma nova participação para um usuário em uma prova pelo ID do usuário e o ID da prova
+    Após criada a participação, de posse do ID da participação é possível responder à prova enviando uma solicitação POST para a rota /api/answer/.
+    """
 
     is_authenticated(request)
     is_admin(request)
@@ -219,7 +221,8 @@ def update_participation(request, exam_id: int, user_id: int, payload: Participa
 
 @router.post("{exam_id}/finish/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def finish_exam(request, exam_id: int):
-    """Finaliza uma prova para um participante e inicia o cálculo da pontuação."""
+    """Finaliza uma prova para um participante e inicia o cálculo da pontuação.
+    Portanto, para testar essa funcionalidade, crie uma participação, responda à prova e, aí sim, envie uma solicitação post para esta rota para que a prova seja finalizada e o celery inicie o cálculo da pontuação."""
 
     is_authenticated(request)
     

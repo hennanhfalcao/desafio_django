@@ -18,9 +18,6 @@ def create_answer(request, payload: AnswerCreateSchema):
     """Cria uma nova resposta para um usuário em uma prova pelo ID do usuário e o ID da prova."""
 
     is_authenticated(request)
-
-    if request.user.is_admin:
-        raise HttpError(403, "Apenas participantes podem responder questões.")
     
     participation = get_object_or_404(ModelParticipation, id=payload.participation_id, user=request.user)
 
