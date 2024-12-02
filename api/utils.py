@@ -64,3 +64,18 @@ def clear_list_exams_cache():
     for key in keys:
         cache.delete(key)
     cache.delete(CACHE_KEY_SET)
+
+QUESTION_CACHE_KEY_SET = "list_question_keys"
+
+def add_question_cache_key(key):
+    """Adiciona uma chave ao conjunto de chaves do cache de questões."""
+    keys = cache.get(QUESTION_CACHE_KEY_SET, set())
+    keys.add(key)
+    cache.set(QUESTION_CACHE_KEY_SET, keys, timeout=None)
+
+def clear_list_questions_cache():
+    """Limpa todas as chaves relacionadas ao cache de listagem de questões."""
+    keys = cache.get(QUESTION_CACHE_KEY_SET, set())
+    for key in keys:
+        cache.delete(key)
+    cache.delete(QUESTION_CACHE_KEY_SET)

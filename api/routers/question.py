@@ -8,8 +8,9 @@ from api.schemas import (
     QuestionUpdateSchema,
     ErrorSchema,
 )
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
+from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_questions_cache, add_question_cache_key
 from ninja.errors import HttpError
+from django.core.cache import cache
 
 router = Router(tags=["Questions"])
 
@@ -32,7 +33,7 @@ def create_question(request, payload: QuestionCreateSchema):
                                 text=choice.text, 
                                 is_correct=choice.is_correct
                                 )
-    
+    clear_list_questions_cache()
     return 201, QuestionSchema.model_validate(question)
 
 @router.get("/", response={200: list[QuestionSchema], 401: ErrorSchema, 403: ErrorSchema})
@@ -51,15 +52,27 @@ def list_questions(request,
     is_authenticated(request)
     is_admin(request)
 
-    questions = ModelQuestion.objects.all()
+    cache_key = f"list_questions:{query}:{order_by}:{page}:{page_size}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        print(f"Cache hit for key: {cache_key}")
+        return cached_data
+
+    try:
+        questions = ModelQuestion.objects.all()
+    except ModelQuestion.DoesNotExist:   
+        raise HttpError(404, "Nenhuma questão encontrada") 
     if query:
         questions = questions.filter(Q(text__icontains=query))
 
     questions = order_queryset(questions, order_by)
 
     questions = paginate_queryset(questions, page, page_size)
-
-    return [QuestionSchema.model_validate(question) for question in questions]
+    results = [QuestionSchema.model_validate(question) for question in questions]
+    cache.set(cache_key, results, timeout=300)
+    add_question_cache_key(cache_key)
+    return results
 
 
 @router.get("/{question_id}", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
@@ -115,7 +128,7 @@ def partial_update_question(request, question_id: int, payload: QuestionUpdateSc
             )
 
     question.save()       
-
+    clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
 @router.put("/put/{question_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
@@ -157,7 +170,7 @@ def update_question(request, question_id: int, payload: QuestionUpdateSchema):
             )
 
     question.save()
-
+    clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
 @router.delete("/delete/{question_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
@@ -170,6 +183,7 @@ def delete_question(request, question_id: int):
     is_admin(request)
     question = get_object_or_404(ModelQuestion, id=question_id)
     question.delete()
+    clear_list_questions_cache()
     return 204, None
 
 
@@ -187,6 +201,7 @@ def link_question_to_exam(request, question_id: int, exam_id: int):
     exam = get_object_or_404(ModelExam, id=exam_id)
     question.exams.add(exam)
     question.save()
+    clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
 @router.delete("/{question_id}/unlink-exam/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
@@ -203,4 +218,5 @@ def unlink_question_from_exam(request, question_id: int, exam_id: int):
     exam = get_object_or_404(ModelExam, id=exam_id)
     question.exams.remove(exam)
     question.save()
+    clear_list_questions_cache()
     return QuestionSchema.model_validate(question)
