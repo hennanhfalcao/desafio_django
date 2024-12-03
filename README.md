@@ -53,5 +53,5 @@ Confirme que tarefas como correção de respostas e cálculo de rankings são ex
 ## Para rodar os testes unitários
 `python manage.py test api.tests`
 
-## Para visualizar documentação, basta executar o projeto via docker e acessar a rota:
-[http://127.0.0.1:8000/api/docs](Documentaçãos)
+## Para visualizar documentação detalhada, com os esquemas de serialização e exemplos de requisições, basta executar o projeto via docker e acessar a rota:
+[http://127.0.0.1:8000/api/docs](Documentação)
