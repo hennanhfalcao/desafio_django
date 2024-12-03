@@ -219,7 +219,7 @@ class TestExamEndpoints(APITestCase):
         participation = ModelParticipation.objects.create(
             user=self.participant_user,
             exam=self.exam1,
-            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)), 
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),  # Criação inicial
             finished_at=None,
             score=0.0
         )

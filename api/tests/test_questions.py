@@ -104,12 +104,12 @@ class TestQuestionEndpoints(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_link_question_to_exam(self):
-        response = self.client.post(f"/api/questions/{self.question2.id}/{self.exam2.id}/", **self.admin_headers)
+        response = self.client.post(f"/api/questions/{self.question2.id}/exams/{self.exam2.id}/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(self.exam2.id, response.json()["exam_ids"])
 
     def test_unlink_question_from_exam(self):
-        response = self.client.delete(f"/api/questions/{self.question1.id}/{self.exam1.id}/", **self.admin_headers)
+        response = self.client.delete(f"/api/questions/{self.question1.id}/exams/{self.exam1.id}/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn(self.exam1.id, response.json()["exam_ids"])
 

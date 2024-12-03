@@ -1,8 +1,8 @@
 from ninja import Router
 from django.shortcuts import get_object_or_404
 from api.models import ModelChoice, ModelQuestion, ModelAnswer, ModelParticipation
-from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema, AnswerSchema, AnswerCreateSchema, AnswerUpdateSchema
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_answers_cache, add_answer_cache_key
+from api.schemas import ErrorSchema, AnswerSchema, AnswerCreateSchema, AnswerUpdateSchema
+from api.utils import is_authenticated, order_queryset, paginate_queryset, clear_list_answers_cache, add_answer_cache_key
 from ninja.errors import HttpError
 from django.db.models import Q
 from django.contrib.auth import get_user_model
@@ -59,7 +59,7 @@ def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
     clear_list_answers_cache()
     return 200, AnswerSchema.model_validate(answer)
 
-@router.get("/{participation_id}/", response={200: list[AnswerSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.get("/participants/{participation_id}/", response={200: list[AnswerSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def list_answers(
     request,
     participation_id: int,
@@ -70,9 +70,9 @@ def list_answers(
 ):
     """
     Lista todas as respostas com busca, ordenação e paginação opcionais.
-    É possível ordená-las por meio do campo "id" por meio da rota: /api/answers/{participation_id}/?order_by=-id
-    A páginação é feita por meio da rota: /api/answers/{participation_id}/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
-    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/answers/{participation_id}/?query=
+    É possível ordená-las por meio do campo "id" por meio da rota: /api/answers/participants/{participation_id}/?order_by=-id
+    A páginação é feita por meio da rota: /api/answers/participants/{participation_id}/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
+    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/answers/participants/{participation_id}/?query=
     """
     is_authenticated(request)
 

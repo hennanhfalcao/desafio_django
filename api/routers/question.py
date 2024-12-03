@@ -186,7 +186,7 @@ def delete_question(request, question_id: int):
     return 204, None
 
 
-@router.post("/{question_id}/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.post("/{question_id}/exams/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def link_question_to_exam(request, question_id: int, exam_id: int):
     """
     Vincula uma questão a uma prova.
@@ -203,7 +203,7 @@ def link_question_to_exam(request, question_id: int, exam_id: int):
     clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
-@router.delete("/{question_id}/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.delete("/{question_id}/exams/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def unlink_question_from_exam(request, question_id: int, exam_id: int):
     """
     Desvincula uma questão de uma prova.

@@ -56,24 +56,26 @@ class TestAnswerEndpoints(APITestCase):
 
     def test_list_answers(self):
         answer = ModelAnswer.objects.create(
-        participation=self.participation,
-        question=self.question,
-        choice=self.choice_correct
-    )
-
-        response = self.client.get(
-            f"/api/answers/{self.participation.id}/",
-            **self.participant_headers
+            participation=self.participation,
+            question=self.question,
+            choice=self.choice_correct
         )
 
+        response = self.client.get(
+            f"/api/answers/participants/{self.participation.id}/",
+            **self.participant_headers
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response_data = response.json()
-        self.assertEqual(response_data["id"], answer.id)
-        self.assertEqual(response_data["participation"]["id"], self.participation.id)
-        self.assertEqual(response_data["question"]["id"], self.question.id)
-        self.assertEqual(response_data["choice"]["id"], self.choice_correct.id)
+        self.assertEqual(len(response_data), 1)  # 
+
+        response_answer = response_data[0]
+        self.assertEqual(response_answer["id"], answer.id)
+        self.assertEqual(response_answer["participation"]["id"], self.participation.id)
+        self.assertEqual(response_answer["question"]["id"], self.question.id)
+        self.assertEqual(response_answer["choice"]["id"], self.choice_correct.id)
 
     def test_create_answer(self):
         payload = {
