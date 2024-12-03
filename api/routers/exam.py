@@ -113,9 +113,15 @@ def delete_exam(request, exam_id: int):
     return 204, None
 
 @router.get("/{exam_id}/participants/", response={200: list[ParticipationSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
-def list_participants(request, exam_id: int):
+def list_participants(request,
+                       exam_id: int,
+                       query: str = None,
+                       order_by: str = "-id",
+                       page: int = 1,
+                       page_size: int = 10):
     """Lista os participantes de uma prova por meio do ID
-    Apenas administradores podem listar os participantes de uma prova."""
+    Apenas administradores podem listar os participantes de uma prova.
+    Busca, paginação e ordenação são opcionais."""
     is_authenticated(request)
     is_admin(request)
 
@@ -123,8 +129,20 @@ def list_participants(request, exam_id: int):
         exam = ModelExam.objects.get(id=exam_id)
     except ModelExam.DoesNotExist:
         raise HttpError(404, "Prova não encontrada")
+    
+    participants = ModelParticipation.objects.filter(exam=exam)
+    if not participants.exists():
+        raise HttpError(404, "Participantes nao encontrados")
+    
+    if query:
+        participants = participants.filter(
+            Q(user__username__icontains=query) | Q(user__email__icontains=query)
+        )
 
-    return [ParticipationSchema.model_validate(participation) for participation in ModelParticipation.objects.filter(exam=exam)]
+    participants = order_queryset(participants, order_by)
+
+    participants = paginate_queryset(participants, page, page_size)
+    return [ParticipationSchema.model_validate(participation) for participation in participants]
 
 @router.post("/{exam_id}/participants/", response={201: ParticipationSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def create_participation(request, exam_id: int, payload: ParticipationCreateSchema):
