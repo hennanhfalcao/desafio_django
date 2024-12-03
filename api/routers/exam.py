@@ -29,7 +29,7 @@ def create_exam(request, payload: ExamCreateSchema):
 def list_exams(request, query: str = None, order_by: str = "-name", page: int = 1, page_size: int = 10):
     """Lista todas as provas com busca, ordenação e paginação opcionais.
     É possível ordená-las por meio do campo created_at por meio da rota: /api/exams/?order_by=-name
-    A páginação é feita por meio da rota: /api/exams/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A páginação é feita por meio da rota: /api/exams/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
     A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/exams/?query="""
     is_authenticated(request)
     is_admin(request)

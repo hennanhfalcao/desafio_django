@@ -58,9 +58,9 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
     python manage.py createsuperuser
    ```
 
-4. **Autentique-se**: Envie uma requisição para a rota http://127.0.0.1:8000/api/token/ com as credenciais do superusuário.
+4. **Autentique-se**: Envie uma requisição para a rota http://127.0.0.1:8000/api/token/ou http://localhost:8000/api/token/ com as credenciais do superusuário.
 
-5. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs.
+5. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs ou http://localhost:8000/api/docs.
  - A documentação conta com exemplos de requisições e com os esquemas de serialização de dados.
 
 ### Testes
@@ -73,31 +73,33 @@ Para rodar os testes unitários:
 ### Usuários
  - POST /api/users/: Criação de usuários.
  - GET /api/users/: Listagem de usuários.
- - GET /api/users/{id}/: Detalhes de um usuário.
- - PATCH /api/users/{id}/: Atualização parcial de um usuário.
- - DELETE /api/users/{id}/: Exclusão de um usuário.
+ - GET /api/users/{user_id}/: Detalhes de um usuário.
+ - PATCH /api/users/{user_id}/: Atualização parcial de um usuário.
+ - DELETE /api/users/{user_id}/: Exclusão de um usuário.
 ### Provas
  - POST /api/exams/: Criação de provas.
  - GET /api/exams/: Listagem de provas (com cache).
- - GET /api/exams/{id}/: Detalhes de uma prova.
- - PATCH /api/exams/patch/{id}/: Atualização parcial de uma prova.
- - PUT /api/exams/put/{id}/: Atualização completa de uma prova.
- - DELETE /api/exams/{id}/: Exclusão de uma prova.
+ - GET /api/exams/{exam_id}/: Detalhes de uma prova.
+ - PATCH /api/exams/patch/{exam_id}/: Atualização parcial de uma prova.
+ - PUT /api/exams/put/{exam_id}/: Atualização completa de uma prova.
+ - DELETE /api/exams/{exam_id}/: Exclusão de uma prova.
  - POST /api/exams/{exam_id}/finish/: Finalizar uma prova.
  - GET /api/exams/{exam_id}/progress/: Progresso da correção de uma prova.
  - GET /api/ranking/{exam_id}/ranking/: Visualizar o ranking de uma prova.
 ### Questões
  - POST /api/questions/: Criação de questões.
  - GET /api/questions/: Listagem de questões (com cache).
- - GET /api/questions/{id}/: Detalhes de uma questão.
- - PATCH /api/questions/{id}/: Atualização parcial de uma questão.
- - DELETE /api/questions/{id}/: Exclusão de uma questão.
+ - GET /api/questions/{question_id}/: Detalhes de uma questão.
+ - PATCH /api/questions/{question_id}/: Atualização parcial de uma questão.
+ - DELETE /api/questions/{question_id}/: Exclusão de uma questão.
  - POST /api/questions/{question_id}/link-exam/{exam_id}/: Vincular uma questão a uma prova.
  - POST /api/questions/{question_id}/unlink-exam/{exam_id}/: Desvincular uma questão de uma prova.
 ### Respostas
  - POST /api/answers/: Criação de respostas.
- - GET /api/answers/: Listagem de respostas (com cache).
- - PATCH /api/answers/{id}/: Atualização de uma resposta.
+ - GET /api/answers/{participation_id}/: Listagem de respostas (com cache).
+ - GET /api/answers/{answer_id}/: Detalhes de uma resposta.
+ - PATCH /api/answers/{answer_id}/: Atualização de uma resposta.
+ - DELETE /api/answers/delete/{asnwer_id}/: Deleção de uma resposta.
 ### Participações
  - POST /api/exams/{exam_id}/participants/: Inscrição em uma prova.
  - GET /api/exams/{exam_id}/participants/: Listagem de participantes de uma prova.

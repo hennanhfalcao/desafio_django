@@ -55,23 +55,44 @@ def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
     clear_list_answers_cache()
     return 200, AnswerSchema.model_validate(answer)
 
-@router.get("/{participation_id}", response={200: dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
-def list_answers(request, participation_id: int):
-    """Lista todas as respostas de um participante em uma prova.
-    Apenas participantes podem listar suas proprias respostas."""
+@router.get("/{participation_id}/", response={200: dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+def list_answers(
+    request,
+    participation_id: int,
+    query: str = None,
+    order_by: str = "-id",
+    page: int = 1,
+    page_size: int = 10,
+):
+    """
+    Lista todas as respostas com busca, ordenação e paginação opcionais.
+    É possível ordená-las por meio do campo "id" por meio da rota: /api/answers/{participation_id}/?order_by=-id
+    A páginação é feita por meio da rota: /api/answers/{participation_id}/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
+    A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/answers/{participation_id}/?query=
+    """
     is_authenticated(request)
 
-    cache_key = f"answers-{participation_id}-{request.user.id}"
+    cache_key = f"answers-{participation_id}-{request.user.id}-{query}-{order_by}-{page}-{page_size}"
     cached_data = cache.get(cache_key)
 
     if cached_data:
         return {"results": cached_data}
-    
+
     participation = get_object_or_404(ModelParticipation, id=participation_id, user=request.user)
 
-    answer = ModelAnswer.objects.filter(participation=participation)
-    results = [AnswerSchema.model_validate(answer) for answer in answer]
+    answers = ModelAnswer.objects.filter(participation=participation)
+
+    if query:
+        answers = answers.filter(Q(question__text__icontains=query) | Q(choice__text__icontains=query))
+
+    answers = order_queryset(answers, order_by)
+
+    answers = paginate_queryset(answers, page, page_size)
+
+    results = [AnswerSchema.model_validate(answer) for answer in answers]
+
     cache.set(cache_key, results, timeout=300)
+    add_answer_cache_key(cache_key)
     return {"results": results}
 
 @router.get("/get/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
@@ -87,7 +108,7 @@ def get_answer_details(request, answer_id: int):
 
     return AnswerSchema.model_validate(answer)
 
-@router.delete("/{answer_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.delete("/delete/{answer_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def delete_answer(request, answer_id: int):
     """Deleta uma resposta por meio do ID.
     Apenas o autor da resposta pode deletá-la."""

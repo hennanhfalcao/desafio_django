@@ -62,7 +62,7 @@ class TestAnswerEndpoints(APITestCase):
         )
 
         response = self.client.get(
-            f"/api/answers/{self.participation.id}",
+            f"/api/answers/{self.participation.id}/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -136,7 +136,7 @@ class TestAnswerEndpoints(APITestCase):
             choice=self.choice_correct
         )
         response = self.client.delete(
-            f"/api/answers/{answer.id}/",
+            f"/api/answers/delete/{answer.id}/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

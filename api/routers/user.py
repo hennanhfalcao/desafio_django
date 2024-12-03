@@ -43,7 +43,7 @@ def list_users(
     """
     Lista todos os usuários com busca, ordenação e paginação opcionais.
     É possível ordená-los por meio do campo username por meio da rota: /api/users/?order_by=-username
-    A páginação é feita por meio da rota: /api/users/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A páginação é feita por meio da rota: /api/users/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
     A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/users/?query=
     Apenas administradores podem ver a lista de usuários.
     """

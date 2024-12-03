@@ -49,10 +49,9 @@ def generate_ranking(exam_id):
         )
 
         print(f"Participações encontradas para o ranking: {participations.count()}")
-        # Remove rankings antigos
+
         ModelRanking.objects.filter(exam=exam).delete()
 
-        # Cria rankings em massa
         rankings = [
             ModelRanking(
                 exam=exam,

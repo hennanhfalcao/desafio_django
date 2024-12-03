@@ -46,7 +46,7 @@ def list_questions(request,
     """
     Lista todas as questões com busca, ordenação e paginação opcionais.
     É possível ordená-las por meio do campo created_at por meio da rota: /api/questions/?order_by=-created_at
-    A páginação é feita por meio da rota: /api/questions/?page=2&page_size=10, em que os parâmetros page e page_size podem ser alterados.
+    A páginação é feita por meio da rota: /api/questions/?page=<int>&page_size=<int>, em que os parâmetros page e page_size podem ser alterados.
     A busca por string é feita pelo campo text e pode ser testada acessando a rota: /api/questions/?query=
     """
     is_authenticated(request)
