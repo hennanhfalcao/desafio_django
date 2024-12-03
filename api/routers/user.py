@@ -1,9 +1,10 @@
 from ninja import Router
 from django.db.models import Q
 from api.schemas import UserSchema, UserCreateSchema, UserUpdateSchema, ErrorSchema
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
+from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, add_user_cache_key, clear_list_users_cache
 from ninja.errors import HttpError
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -28,9 +29,10 @@ def create_user(request, payload: UserCreateSchema):
         is_admin=payload.is_admin,
         is_participant=payload.is_participant
     )
+    clear_list_users_cache()
     return 201, UserSchema.model_validate(user)
 
-@router.get("/", response={200: list[UserSchema], 401: ErrorSchema, 403: ErrorSchema})
+@router.get("/", response={200: list[UserSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def list_users(
     request, 
     query: str = None, 
@@ -48,7 +50,17 @@ def list_users(
     is_authenticated(request)
     is_admin(request)
 
-    users = User.objects.all()
+    cache_key = f"list_users:{query}:{order_by}:{page}:{page_size}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        return cached_data
+    try:
+        users = User.objects.all()
+    except User.DoesNotExist:
+        raise HttpError(404, "Nenhum usuário encontrado")
+    
+    
     if query:
         users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
 
@@ -56,7 +68,10 @@ def list_users(
 
     users = paginate_queryset(users, page, page_size)
 
-    return [UserSchema.model_validate(user) for user in users]
+    results = [UserSchema.model_validate(user) for user in users]
+    cache.set(cache_key, results, timeout=300)
+    add_user_cache_key(cache_key)
+    return results
 
 @router.get("/{user_id}/", response={200: UserSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_user_details(request, user_id: int):
@@ -86,6 +101,7 @@ def partial_update_user(request, user_id: int, payload: UserUpdateSchema):
             else:
                 setattr(user, attr, value)
         user.save()
+        clear_list_users_cache()
         return UserSchema.model_validate(user)        
     except User.DoesNotExist:
         raise HttpError(404, "Usuário não encontrado")
@@ -101,4 +117,5 @@ def delete_user(request, user_id: int):
     except User.DoesNotExist:
         raise HttpError(404, "Usuário não encontrado")
     user.delete()
+    clear_list_users_cache()
     return 204, None

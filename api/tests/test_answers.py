@@ -62,7 +62,7 @@ class TestAnswerEndpoints(APITestCase):
         )
 
         response = self.client.get(
-            f"/api/answers/?participation_id={self.participation.id}",
+            f"/api/answers/{self.participation.id}",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)

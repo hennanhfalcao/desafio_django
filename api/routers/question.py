@@ -36,7 +36,7 @@ def create_question(request, payload: QuestionCreateSchema):
     clear_list_questions_cache()
     return 201, QuestionSchema.model_validate(question)
 
-@router.get("/", response={200: list[QuestionSchema], 401: ErrorSchema, 403: ErrorSchema})
+@router.get("/", response={200: list[QuestionSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def list_questions(request, 
                 query: str = None, 
                 order_by: str = "-created_at", 
@@ -56,7 +56,6 @@ def list_questions(request,
     cached_data = cache.get(cache_key)
 
     if cached_data:
-        print(f"Cache hit for key: {cache_key}")
         return cached_data
 
     try:

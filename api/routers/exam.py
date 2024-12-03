@@ -25,7 +25,7 @@ def create_exam(request, payload: ExamCreateSchema):
     clear_list_exams_cache()
     return 201, ExamSchema.model_validate(exam)
 
-@router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema})
+@router.get("/", response={200: list[ExamSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def list_exams(request, query: str = None, order_by: str = "-name", page: int = 1, page_size: int = 10):
     """Lista todas as provas com busca, ordenação e paginação opcionais.
     É possível ordená-las por meio do campo created_at por meio da rota: /api/exams/?order_by=-name
@@ -38,7 +38,6 @@ def list_exams(request, query: str = None, order_by: str = "-name", page: int = 
     cached_data = cache.get(cache_key)
 
     if cached_data:
-        print(f"Cache hit for key: {cache_key}")
         return cached_data
 
     try:    

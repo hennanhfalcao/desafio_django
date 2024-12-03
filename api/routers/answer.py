@@ -2,10 +2,11 @@ from ninja import Router
 from django.shortcuts import get_object_or_404
 from api.models import ModelChoice, ModelQuestion, ModelAnswer, ModelParticipation
 from api.schemas import ExamSchema, ExamCreateSchema, ExamUpdateSchema, ErrorSchema, ParticipationSchema, ParticipationCreateSchema, ParticipationUpdateSchema, AnswerSchema, AnswerCreateSchema, AnswerUpdateSchema
-from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset
+from api.utils import is_authenticated, is_admin, order_queryset, paginate_queryset, clear_list_answers_cache, add_answer_cache_key
 from ninja.errors import HttpError
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -34,7 +35,7 @@ def create_answer(request, payload: AnswerCreateSchema):
         question=question,
         choice = choice
     )
-
+    clear_list_answers_cache()
     return 201, AnswerSchema.model_validate(answer)
 
 @router.patch("/patch/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
@@ -51,19 +52,27 @@ def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
         answer.choice = choice
 
     answer.save()
+    clear_list_answers_cache()
     return 200, AnswerSchema.model_validate(answer)
 
-@router.get("/", response={200: dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.get("/{participation_id}", response={200: dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def list_answers(request, participation_id: int):
     """Lista todas as respostas de um participante em uma prova.
     Apenas participantes podem listar suas proprias respostas."""
     is_authenticated(request)
 
+    cache_key = f"answers-{participation_id}-{request.user.id}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        return {"results": cached_data}
+    
     participation = get_object_or_404(ModelParticipation, id=participation_id, user=request.user)
 
     answer = ModelAnswer.objects.filter(participation=participation)
-
-    return {"results": [AnswerSchema.model_validate(answer) for answer in answer]}
+    results = [AnswerSchema.model_validate(answer) for answer in answer]
+    cache.set(cache_key, results, timeout=300)
+    return {"results": results}
 
 @router.get("/get/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def get_answer_details(request, answer_id: int):
@@ -90,5 +99,5 @@ def delete_answer(request, answer_id: int):
         raise HttpError(403, "Apenas o autor da resposta pode deletá-la.")
 
     answer.delete()
-
+    clear_list_answers_cache()
     return 204, None

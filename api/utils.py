@@ -79,3 +79,33 @@ def clear_list_questions_cache():
     for key in keys:
         cache.delete(key)
     cache.delete(QUESTION_CACHE_KEY_SET)
+
+CACHE_USER_KEY_SET = "list_user_keys"
+
+def add_user_cache_key(key):
+    """Adiciona uma chave ao conjunto de chaves do cache de usuários."""
+    keys = cache.get(CACHE_USER_KEY_SET, set())
+    keys.add(key)
+    cache.set(CACHE_USER_KEY_SET, keys, timeout=None)
+
+def clear_list_users_cache():
+    """Limpa todas as chaves relacionadas ao cache de listagem de usuários."""
+    keys = cache.get(CACHE_USER_KEY_SET, set())
+    for key in keys:
+        cache.delete(key)
+    cache.delete(CACHE_USER_KEY_SET)
+
+CACHE_ANSWER_KEY_SET = "list_answer_keys"
+
+def add_answer_cache_key(key):
+    """Adiciona uma chave ao conjunto de chaves do cache de respostas."""
+    keys = cache.get(CACHE_ANSWER_KEY_SET, set())
+    keys.add(key)
+    cache.set(CACHE_ANSWER_KEY_SET, keys, timeout=None)
+
+def clear_list_answers_cache():
+    """Limpa todas as chaves relacionadas ao cache de listagem de respostas."""
+    keys = cache.get(CACHE_ANSWER_KEY_SET, set())
+    for key in keys:
+        cache.delete(key)
+    cache.delete(CACHE_ANSWER_KEY_SET)
