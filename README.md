@@ -60,7 +60,8 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
 
 4. **Autentique-se**: Envie uma requisição para a rota http://127.0.0.1:8000/api/token/ com as credenciais do superusuário.
 
-4. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs.
+5. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs.
+ - A documentação conta com exemplos de requisições e com os esquemas de serialização de dados.
 
 ### Testes
 Para rodar os testes unitários:
