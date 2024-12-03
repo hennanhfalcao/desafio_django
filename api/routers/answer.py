@@ -16,7 +16,8 @@ router = Router(tags=["Answers"])
 @router.post("/", response={201: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def create_answer(request, payload: AnswerCreateSchema):
 
-    """Cria uma nova resposta para um usuário em uma prova pelo ID do usuário e o ID da prova."""
+    """Cria uma nova resposta para um usuário em uma prova pelo ID do usuário e o ID da prova.
+    Lembre-se que para responder, quem tem que estar autenticado é o usuário que irá responder a questão."""
 
     is_authenticated(request)
     
@@ -40,6 +41,9 @@ def create_answer(request, payload: AnswerCreateSchema):
 
 @router.patch("/patch/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
+    """Atualiza uma resposta.
+    Apenas o autor da resposta pode atualizá-la."""
+    
     is_authenticated(request)
 
     answer = get_object_or_404(ModelAnswer, id=answer_id)
@@ -98,7 +102,8 @@ def list_answers(
 @router.get("/get/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def get_answer_details(request, answer_id: int):
 
-    """Recupera detalhes de uma resposta por meio do ID."""
+    """Recupera detalhes de uma resposta por meio do ID.
+    Lembre-se de estar autenticado com o participante"""
     is_authenticated(request)
 
     answer = get_object_or_404(ModelAnswer, id=answer_id)

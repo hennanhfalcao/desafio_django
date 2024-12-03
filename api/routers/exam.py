@@ -235,6 +235,7 @@ def finish_exam(request, exam_id: int):
     """Finaliza uma prova para um participante e inicia o cálculo da pontuação.
     Portanto, para testar essa funcionalidade, crie uma participação, responda à prova e, aí sim, envie uma solicitação post para esta rota para que a prova seja finalizada e o celery inicie o cálculo da pontuação.
     Além dio mais, o ranking é atualizado conforme as participações nas provas são finalizadas.
+    O usuário autenticado deve ser aquele que está participando da prova.
     Para obter o ranking por prova acesse: GET /api/ranking/{exam_id}/ranking/"""
 
     is_authenticated(request)
@@ -260,6 +261,7 @@ def finish_exam(request, exam_id: int):
 @router.get("/{exam_id}/progress/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def check_progress(request, exam_id: int):
     """Verifica o progresso da correção da prova.
+    Usuário logado deve ser o usuário que estiver respondendo a prova.
     Se a correção tiver sido finalizada, retornará o score para o participante"""
     is_authenticated(request)
     try:
