@@ -98,13 +98,13 @@ class TestExamEndpoints(APITestCase):
 
     def test_update_exam_as_admin(self):
         payload = {"name": "Prova Atualizada"}
-        response = self.client.put(f"/api/exams/put/{self.exam1.id}/", payload, **self.admin_headers, format="json")
+        response = self.client.put(f"/api/exams/{self.exam1.id}/", payload, **self.admin_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["name"], "Prova Atualizada")
 
     def test_partial_update_exam_as_admin(self):
         payload = {"name": "Prova Parcialmente Atualizada"}
-        response = self.client.patch(f"/api/exams/patch/{self.exam1.id}/", payload, **self.admin_headers, format="json")
+        response = self.client.patch(f"/api/exams/{self.exam1.id}/", payload, **self.admin_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["name"], "Prova Parcialmente Atualizada")
 
@@ -219,13 +219,13 @@ class TestExamEndpoints(APITestCase):
         participation = ModelParticipation.objects.create(
             user=self.participant_user,
             exam=self.exam1,
-            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)),  # Criação inicial
+            started_at=make_aware(datetime(2024, 11, 29, 12, 0, 0)), 
             finished_at=None,
             score=0.0
         )
         payload = {
-            "started_at": "2024-11-29T14:00:00Z",  # UTC
-            "finished_at": "2024-11-29T16:00:00Z",  # UTC
+            "started_at": "2024-11-29T14:00:00Z", 
+            "finished_at": "2024-11-29T16:00:00Z", 
             "score": 95.5
         }
         response = self.client.patch(
@@ -292,7 +292,7 @@ class TestExamEndpoints(APITestCase):
         participation, created = ModelParticipation.objects.get_or_create(user=self.participant_user, exam=self.exam1)
 
         response = self.client.post(
-            f"/api/exams/{self.exam1.id}/finish/",
+            f"/api/exams/{self.exam1.id}/conclusions/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -307,7 +307,7 @@ class TestExamEndpoints(APITestCase):
         )
 
         response = self.client.post(
-            f"/api/exams/{self.exam1.id}/finish/",
+            f"/api/exams/{self.exam1.id}/conclusions/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -317,7 +317,7 @@ class TestExamEndpoints(APITestCase):
         ModelParticipation.objects.filter(user=self.participant_user, exam=self.exam1).delete()
 
         response = self.client.post(
-            f"/api/exams/{self.exam1.id}/finish/",
+            f"/api/exams/{self.exam1.id}/conclusions/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -327,7 +327,7 @@ class TestExamEndpoints(APITestCase):
         ModelParticipation.objects.get_or_create(user=self.participant_user, exam=self.exam1)
 
         response = self.client.get(
-            f"/api/exams/{self.exam1.id}/progress/",
+            f"/api/exams/{self.exam1.id}/progresses/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -344,7 +344,7 @@ class TestExamEndpoints(APITestCase):
         )
 
         response = self.client.get(
-            f"/api/exams/{self.exam1.id}/progress/",
+            f"/api/exams/{self.exam1.id}/progresses/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -355,7 +355,7 @@ class TestExamEndpoints(APITestCase):
         ModelParticipation.objects.filter(user=self.participant_user, exam=self.exam1).delete()
 
         response = self.client.get(
-            f"/api/exams/{self.exam1.id}/progress/",
+            f"/api/exams/{self.exam1.id}/progresses/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

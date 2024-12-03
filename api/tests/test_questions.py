@@ -80,7 +80,7 @@ class TestQuestionEndpoints(APITestCase):
 
     def test_partial_update_question(self):
         payload = {"text": "Questão Atualizada"}
-        response = self.client.patch(f"/api/questions/patch/{self.question1.id}/", payload, **self.admin_headers, format="json")
+        response = self.client.patch(f"/api/questions/{self.question1.id}/", payload, **self.admin_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["text"], "Questão Atualizada")
 
@@ -93,23 +93,23 @@ class TestQuestionEndpoints(APITestCase):
                 {"text": "Nova Opção 2", "is_correct": True},
             ]
         }
-        response = self.client.put(f"/api/questions/put/{self.question1.id}/", payload, **self.admin_headers, format="json")
+        response = self.client.put(f"/api/questions/{self.question1.id}/", payload, **self.admin_headers, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["text"], "Questão Atualizada")
         self.assertEqual(len(response.json()["choices"]), 2)
         self.assertIn(self.exam2.id, response.json()["exam_ids"])
 
     def test_delete_question(self):
-        response = self.client.delete(f"/api/questions/delete/{self.question1.id}/", **self.admin_headers)
+        response = self.client.delete(f"/api/questions/{self.question1.id}/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_link_question_to_exam(self):
-        response = self.client.post(f"/api/questions/{self.question2.id}/link-exam/{self.exam2.id}/", **self.admin_headers)
+        response = self.client.post(f"/api/questions/{self.question2.id}/{self.exam2.id}/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(self.exam2.id, response.json()["exam_ids"])
 
     def test_unlink_question_from_exam(self):
-        response = self.client.delete(f"/api/questions/{self.question1.id}/unlink-exam/{self.exam1.id}/", **self.admin_headers)
+        response = self.client.delete(f"/api/questions/{self.question1.id}/{self.exam1.id}/", **self.admin_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn(self.exam1.id, response.json()["exam_ids"])
 

@@ -7,7 +7,7 @@ from ninja.errors import HttpError
 
 router = Router(tags=["Ranking"])
 
-@router.get("/{exam_id}/ranking/", response={200: list[RankingSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.get("/{exam_id}/", response={200: list[RankingSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def get_ranking(request, exam_id: int):
     """
     Obtem o ranking de uma prova.

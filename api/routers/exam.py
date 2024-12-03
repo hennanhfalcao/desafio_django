@@ -71,7 +71,7 @@ def get_exam_details(request, exam_id: int):
     
     return ExamSchema.model_validate(exam)
 
-@router.patch("/patch/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.patch("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def partial_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     """Atualiza parcialmente uma prova por meio do seu ID"""
     is_authenticated(request)
@@ -84,7 +84,7 @@ def partial_update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     clear_list_exams_cache()
     return ExamSchema.model_validate(exam)
 
-@router.put("/put/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.put("/{exam_id}/", response={200: ExamSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_exam(request, exam_id: int, payload: ExamUpdateSchema):
     """Atualiza completamente uma prova por meio do seu ID"""
     is_authenticated(request)
@@ -248,7 +248,7 @@ def update_participation(request, exam_id: int, user_id: int, payload: Participa
 
     return 200, ParticipationSchema.model_validate(participation)
 
-@router.post("{exam_id}/finish/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.post("{exam_id}/conclusions/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def finish_exam(request, exam_id: int):
     """Finaliza uma prova para um participante e inicia o cálculo da pontuação.
     Portanto, para testar essa funcionalidade, crie uma participação, responda à prova e, aí sim, envie uma solicitação post para esta rota para que a prova seja finalizada e o celery inicie o cálculo da pontuação.
@@ -276,7 +276,7 @@ def finish_exam(request, exam_id: int):
 
     return 200, {"detail":"Cálculo da pontuação iniciado"}
 
-@router.get("/{exam_id}/progress/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.get("/{exam_id}/progresses/", response={200:dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def check_progress(request, exam_id: int):
     """Verifica o progresso da correção da prova.
     Usuário logado deve ser o usuário que estiver respondendo a prova.

@@ -15,7 +15,7 @@ api.add_router("/users", user_router)
 api.add_router("/exams", exam_router)
 api.add_router("/questions", question_router)
 api.add_router("/answers", answer_router)
-api.add_router("/ranking", ranking_router)
+api.add_router("/rankings", ranking_router)
 
 
 @api.get("/docs", include_in_schema=False)

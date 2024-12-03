@@ -53,7 +53,7 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
     docker-compose build
     docker-compose up
    ```
-3. **Crie um Superusuário (em outro terinal com o servidor rodando)**:
+3. **Crie um Superusuário (em outro terminal com o servidor rodando, dentro do container desafio_django-web-1)**:
    ```bash
     python manage.py createsuperuser
    ```

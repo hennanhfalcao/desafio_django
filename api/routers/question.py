@@ -84,7 +84,7 @@ def get_question_details(request, question_id: int):
     question = get_object_or_404(ModelQuestion, id=question_id)
     return QuestionSchema.model_validate(question)
 
-@router.patch("/patch/{question_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.patch("/{question_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def partial_update_question(request, question_id: int, payload: QuestionUpdateSchema):
     """
     Atualiza parcialmente uma questão por meio do seu ID.
@@ -130,7 +130,7 @@ def partial_update_question(request, question_id: int, payload: QuestionUpdateSc
     clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
-@router.put("/put/{question_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.put("/{question_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_question(request, question_id: int, payload: QuestionUpdateSchema):
     """
     Atualiza completamente uma questão por meio do seu ID.
@@ -172,7 +172,7 @@ def update_question(request, question_id: int, payload: QuestionUpdateSchema):
     clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
-@router.delete("/delete/{question_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.delete("/{question_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def delete_question(request, question_id: int):
     """
     Deleta uma questão pelo ID.
@@ -186,7 +186,7 @@ def delete_question(request, question_id: int):
     return 204, None
 
 
-@router.post("/{question_id}/link-exam/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.post("/{question_id}/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def link_question_to_exam(request, question_id: int, exam_id: int):
     """
     Vincula uma questão a uma prova.
@@ -203,7 +203,7 @@ def link_question_to_exam(request, question_id: int, exam_id: int):
     clear_list_questions_cache()
     return 200, QuestionSchema.model_validate(question)
 
-@router.delete("/{question_id}/unlink-exam/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
+@router.delete("/{question_id}/{exam_id}/", response={200: QuestionSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def unlink_question_from_exam(request, question_id: int, exam_id: int):
     """
     Desvincula uma questão de uma prova.

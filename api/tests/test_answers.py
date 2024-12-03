@@ -56,18 +56,24 @@ class TestAnswerEndpoints(APITestCase):
 
     def test_list_answers(self):
         answer = ModelAnswer.objects.create(
-            participation=self.participation,
-            question=self.question,
-            choice=self.choice_correct
-        )
+        participation=self.participation,
+        question=self.question,
+        choice=self.choice_correct
+    )
 
         response = self.client.get(
             f"/api/answers/{self.participation.id}/",
             **self.participant_headers
         )
+
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.json()), 1)
-        self.assertEqual(response.json()["results"][0]["id"], answer.id)
+
+        response_data = response.json()
+        self.assertEqual(response_data["id"], answer.id)
+        self.assertEqual(response_data["participation"]["id"], self.participation.id)
+        self.assertEqual(response_data["question"]["id"], self.question.id)
+        self.assertEqual(response_data["choice"]["id"], self.choice_correct.id)
 
     def test_create_answer(self):
         payload = {
@@ -106,7 +112,7 @@ class TestAnswerEndpoints(APITestCase):
         )
         payload = {"choice_id": self.choice_correct.id}
         response = self.client.patch(
-            f"/api/answers/patch/{answer.id}/",
+            f"/api/answers/{answer.id}/",
             payload,
             **self.participant_headers,
             format="json"
@@ -122,7 +128,7 @@ class TestAnswerEndpoints(APITestCase):
         )
         payload = {"choice_id": 9999} 
         response = self.client.patch(
-            f"/api/answers/patch/{answer.id}/",
+            f"/api/answers/{answer.id}/",
             payload,
             **self.participant_headers,
             format="json"
@@ -136,7 +142,7 @@ class TestAnswerEndpoints(APITestCase):
             choice=self.choice_correct
         )
         response = self.client.delete(
-            f"/api/answers/delete/{answer.id}/",
+            f"/api/answers/{answer.id}/",
             **self.participant_headers
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

@@ -39,7 +39,7 @@ def create_answer(request, payload: AnswerCreateSchema):
     clear_list_answers_cache()
     return 201, AnswerSchema.model_validate(answer)
 
-@router.patch("/patch/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.patch("/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
     """Atualiza uma resposta.
     Apenas o autor da resposta pode atualizá-la."""
@@ -59,7 +59,7 @@ def update_answer(request, answer_id: int, payload: AnswerUpdateSchema):
     clear_list_answers_cache()
     return 200, AnswerSchema.model_validate(answer)
 
-@router.get("/{participation_id}/", response={200: dict, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.get("/{participation_id}/", response={200: list[AnswerSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def list_answers(
     request,
     participation_id: int,
@@ -80,7 +80,7 @@ def list_answers(
     cached_data = cache.get(cache_key)
 
     if cached_data:
-        return {"results": cached_data}
+        return cached_data 
 
     participation = get_object_or_404(ModelParticipation, id=participation_id, user=request.user)
 
@@ -90,16 +90,16 @@ def list_answers(
         answers = answers.filter(Q(question__text__icontains=query) | Q(choice__text__icontains=query))
 
     answers = order_queryset(answers, order_by)
-
     answers = paginate_queryset(answers, page, page_size)
 
     results = [AnswerSchema.model_validate(answer) for answer in answers]
 
     cache.set(cache_key, results, timeout=300)
     add_answer_cache_key(cache_key)
-    return {"results": results}
 
-@router.get("/get/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+    return results
+
+@router.get("/{answer_id}/", response={200: AnswerSchema, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def get_answer_details(request, answer_id: int):
 
     """Recupera detalhes de uma resposta por meio do ID.
@@ -113,7 +113,7 @@ def get_answer_details(request, answer_id: int):
 
     return AnswerSchema.model_validate(answer)
 
-@router.delete("/delete/{answer_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
+@router.delete("/{answer_id}/", response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema, 422: ErrorSchema})
 def delete_answer(request, answer_id: int):
     """Deleta uma resposta por meio do ID.
     Apenas o autor da resposta pode deletá-la."""
