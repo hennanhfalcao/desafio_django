@@ -1,57 +1,105 @@
-# desafio_django
-Desenvolvimento de uma Web Service RESTful para gerenciamento de provas com questões de múltiplas escolhas. 
+# Web Service RESTful com Django Ninja para Gerenciamento de provas
 
-## Para executar o projeto via Docker, todos os comandos necessários para a inicialização da aplicação no servidor serão executados, incluindo instalação de dependências via poetry. Basta executar os comandos:
-```python
-docker-compose build
-docker-compose up
-```
+## Visão Geral
 
-## Crie um superusuário em outro terminal com o servidor rodando
-`python manage.py createsuperuser`
+Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com questões de múltipla escolha. A aplicação suporta a comunicação com aplicativos móveis e web e inclui funcionalidades como gerenciamento de usuários, provas, questões, respostas e rankings de participantes.
 
-## Autentique-o via Insomnia ou Postman passando username e senha no corpo da requisição feita para a rota http://127.0.0.1:8000/api/token/
+---
 
-## Cenário Demonstrativo
-### Simulação de uso da aplicação:
-**Usuários**:
+## Funcionalidades
 
-Crie um usuário administrador e usuários participantes.
-Autentique-se usando o JWT gerado na rota /api/token/.
+- **Gerenciamento de Usuários**: Criação, edição, exclusão, listagem e exibição individual de usuários.
+- **Gerenciamento de Provas**: Criação, edição, exclusão, listagem e exibição individual de provas.
+- **Gerenciamento de Questões**: Criação, edição, exclusão, listagem e exibição individual de questões.
+- **Gerenciamento de Escolhas**: Criação, edição, exclusão, listagem e exibição individual de escolhas.
+- **Gerenciamento de Participantes**: Inscrição em provas e acompanhamento.
+- **Sistema de Respostas**: Envio e edição de respostas por participantes.
+- **Correção Automática**: Correção assíncrona das respostas dos participantes.
+- **Rankings**: Cálculo e disponibilização de rankings de candidatos por prova.
+- **Autenticação**: Sistema de autenticação JWT.
+- **Cache**: Implementação de cache para endpoints de listagem.
+- **Testes Unitários**: Cobertura de testes para todas as operações principais.
 
-**Provas e Questões:**
-Crie provas e associe questões e opções.
-Use as rotas de listagem para validar paginação, busca e ordenação.
-
-**Respostas e Participação:**
-Inscreva participantes em provas.
-Envie respostas e finalize a prova para calcular rankings.
-
-
-**Cache**:
-Valide o cache nos endpoints de listagem (ex.: /api/exams/).
-
-**Tarefas Assíncronas**:
-Confirme que tarefas como correção de respostas e cálculo de rankings são executadas corretamente por meio do Celery e Redis.
-
-
-## Funcionalidades Implementadas
- - Autenticação JWT para acesso seguro.
- - Gerenciamento de entidades como usuários, provas, questões e respostas.
- - Correção assíncrona de respostas e cálculo de rankings.
- - Caching em endpoints críticos para melhorar desempenho.
- - Paginação, ordenação e busca nos endpoints.
- - Documentação Interativa com Django Ninja.
+---
 
 ## Tecnologias Utilizadas
- - Django Ninja para APIs rápidas e eficientes.
- - Redis para caching e suporte ao Celery.
- - Celery para tarefas assíncronas.
- - Poetry para gerenciamento de dependências.
- - Docker e Docker Compose para containerização.
 
-## Para rodar os testes unitários
-`python manage.py test api.tests`
+- **Linguagem**: Python 3.10
+- **Framework**: Django 5 e Django Ninja 1.3
+- **Cache**: Redis
+- **Task Queue**: Celery + Celery Beat
+- **Banco de Dados**: SQLite (Desenvolvimento)
+- **Gerenciador de Dependências**: Poetry
+- **Containerização**: Docker e Docker Compose
 
-## Para visualizar documentação detalhada, com os esquemas de serialização e exemplos de requisições, basta executar o projeto via docker e acessar a rota:
-[http://127.0.0.1:8000/api/docs](Documentação)
+---
+
+## Instruções para Executar Localmente
+
+### Pré-requisitos
+
+1. Ter o **Docker** e **Docker Compose** instalados.
+2. Ter o **Python 3.10** instalado para comandos fora do Docker (opcional).
+
+### Passo a Passo
+
+1. **Clone o Repositório**:
+   ```bash
+    git clone <Uhttps://github.com/hennanhfalcao/desafio_django.git>
+    cd desafio_django
+   ```
+2. **Execute a Aplicação com Docker Compose**:
+   ```bash
+    docker-compose build
+    docker-compose up
+   ```
+3. **Crie um Superusuário (em outro terinal com o servidor rodando)**:
+   ```bash
+    python manage.py createsuperuser
+   ```
+
+4. **Autentique-se**: Acesse a rota http://127.0.0.1:8000/api/token/ com as credenciais do superusuário.
+
+4. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs.
+
+### Testes
+Para rodar os testes unitários:
+   ```bash
+    python manage.py test api.tests
+   ```
+
+## Rotas da API
+### Usuários
+ - POST /api/users/: Criação de usuários.
+ - GET /api/users/: Listagem de usuários.
+ - GET /api/users/{id}/: Detalhes de um usuário.
+ - PATCH /api/users/{id}/: Atualização parcial de um usuário.
+ - DELETE /api/users/{id}/: Exclusão de um usuário.
+### Provas
+ - POST /api/exams/: Criação de provas.
+ - GET /api/exams/: Listagem de provas (com cache).
+ - GET /api/exams/{id}/: Detalhes de uma prova.
+ - PATCH /api/exams/patch/{id}/: Atualização parcial de uma prova.
+ - PUT /api/exams/put/{id}/: Atualização completa de uma prova.
+ - DELETE /api/exams/{id}/: Exclusão de uma prova.
+ - POST /api/exams/{exam_id}/finish/: Finalizar uma prova.
+ - GET /api/exams/{exam_id}/progress/: Progresso da correção de uma prova.
+ - GET /api/ranking/{exam_id}/ranking/: Visualizar o ranking de uma prova.
+### Questões
+ - POST /api/questions/: Criação de questões.
+ - GET /api/questions/: Listagem de questões (com cache).
+ - GET /api/questions/{id}/: Detalhes de uma questão.
+ - PATCH /api/questions/{id}/: Atualização parcial de uma questão.
+ - DELETE /api/questions/{id}/: Exclusão de uma questão.
+ - POST /api/questions/{question_id}/link-exam/{exam_id}/: Vincular uma questão a uma prova.
+ - POST /api/questions/{question_id}/unlink-exam/{exam_id}/: Desvincular uma questão de uma prova.
+### Respostas
+ - POST /api/answers/: Criação de respostas.
+ - GET /api/answers/: Listagem de respostas (com cache).
+ - PATCH /api/answers/{id}/: Atualização de uma resposta.
+### Participações
+ - POST /api/exams/{exam_id}/participants/: Inscrição em uma prova.
+ - GET /api/exams/{exam_id}/participants/: Listagem de participantes de uma prova.
+ - DELETE /api/exams/{exam_id}/participants/{user_id}/: Remoção de um participante.
+ - GET /api/exams/{exam_id}/participants/{user_id}/: Detalhes de uma participação.
+ - PATCH /api/exams/{exam_id}/participants/{user_id}/: Atualização de uma participação.
