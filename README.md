@@ -25,7 +25,7 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
 ## Tecnologias Utilizadas
 
 - **Linguagem**: Python 3.10
-- **Framework**: Django 5 e Django Ninja 1.3
+- **Framework**: Django e Django Ninja
 - **Cache**: Redis
 - **Task Queue**: Celery + Celery Beat
 - **Banco de Dados**: SQLite (Desenvolvimento)
@@ -45,7 +45,7 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
 
 1. **Clone o Repositório**:
    ```bash
-    git clone <Uhttps://github.com/hennanhfalcao/desafio_django.git>
+    git clone https://github.com/hennanhfalcao/desafio_django.git
     cd desafio_django
    ```
 2. **Execute a Aplicação com Docker Compose**:
@@ -58,7 +58,7 @@ Desenvolvimento de um Web Service RESTful para o gerenciamento de provas com que
     python manage.py createsuperuser
    ```
 
-4. **Autentique-se**: Acesse a rota http://127.0.0.1:8000/api/token/ com as credenciais do superusuário.
+4. **Autentique-se**: Envie uma requisição para a rota http://127.0.0.1:8000/api/token/ com as credenciais do superusuário.
 
 4. **Documentação da API**: Acesse a documentação em http://127.0.0.1:8000/api/docs.
 
