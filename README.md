@@ -251,6 +251,44 @@ Authorization: Bearer <seu_token_aqui>
 	"questions": []
 }
 ```
+### Linke uma questão ou várias questões a uma prova.
+
+**Método:** POST  
+**URL:** http://localhost:8000/api/questions/1/exams/1/
+
+**Cabeçalhos:**
+Content-Type: application/json  
+Authorization: Bearer <seu_token_aqui>
+
+**Resposta esperada**:
+
+```json
+{
+	"id": 1,
+	"text": "Teste 3",
+	"created_at": "2024-12-04T01:40:56.303Z",
+	"choices": [
+		{
+			"id": 1,
+			"text": "alternativa1",
+			"is_correct": true
+		},
+		{
+			"id": 2,
+			"text": "alternativa2",
+			"is_correct": false
+		},
+		{
+			"id": 3,
+			"text": "alternativa3",
+			"is_correct": false
+		}
+	],
+	"exam_ids": [
+		1
+	]
+}
+```
 
 ### Criar participação em prova
 
