@@ -110,8 +110,22 @@ Para rodar os testes unitários:
 ### Ranking
  - GET /api/rankings/exams/{exam_id}: Obtém o ranking para uma determinada prova
 
+## Cenários demonstrativos
+
+**Siga o fluxo de execução**:
+1. Crie um superusuário no shell do Django
+2. Autentique-o para receber o token
+3. Crie usuários participantes e administradores
+4. Crie provas
+5. Crie questões (Entenda questão como: enunciado e alternativas, no ato do cadastro da questão, indique a alternativa correta.)
+6. Associe questões a provas
+7. Crie partipações de usuários em provas
+8. Responda questões(logando como participante, visto que apenas participantes de uma prova podem responder suas questões.)
+9. Conclua a participação em uma prova para calcular sua pontuação assíncronamente
+10. Consulte o resultado e o ranking
 
 
+A seguir 
 ### Criar usuário
 **Método:** POST  
 **URL:** http://localhost:8000/api/users/  
@@ -123,22 +137,23 @@ Authorization: Bearer <seu_token_aqui>
 **Corpo:**
 ```json
 {
-  "username": "hennanparticipante",
+  "username": "Hennan",
   "password": "123",
-  "email": "hennanparticipante@example.com",
-  "is_admin": false,
+  "email": "hennan@gmail.com",
+  "is_admin": true,
   "is_participant": true
 }
 ```
+Para fins de teste o usuário administrador foi setado (você pode fazer isso utilizando o método PATCH) como participante.
 
 **Resposta esperada**:
 ```json
 {
-  "id": 1,
-  "username": "hennanparticipante",
-  "email": "hennanparticipante@example.com",
-  "is_admin": false,
-  "is_participant": true,
+	"id": 1,
+	"username": "Hennan",
+	"email": "hennan@gmail.com",
+	"is_admin": true,
+	"is_participant": true
 }
 ```
 
@@ -215,7 +230,7 @@ Authorization: Bearer <seu_token_aqui>
 
 ```json
 {
-  "name":"Prova 2 Teste"
+  "name":"Prova 1 Teste"
 }
 ```
 
@@ -223,8 +238,8 @@ Authorization: Bearer <seu_token_aqui>
 
 ```json
 {
-	"id": 2,
-	"name": "Prova 2 Teste",
+	"id": 1,
+	"name": "Prova 1 Teste",
 	"created_by": {
 		"id": 1,
 		"username": "Hennan",
@@ -232,7 +247,7 @@ Authorization: Bearer <seu_token_aqui>
 		"is_admin": true,
 		"is_participant": true
 	},
-	"created_at": "2024-12-03T21:38:21.213Z",
+	"created_at": "2024-12-04T01:41:07.711Z",
 	"questions": []
 }
 ```
@@ -250,7 +265,7 @@ Authorization: Bearer <seu_token_aqui>
 
 ```json
 {
-  "user_id": 3,
+  "user_id": 1,
 	"exam_id": 1
 }
 ```
@@ -259,17 +274,17 @@ Authorization: Bearer <seu_token_aqui>
 
 ```json
 {
-	"id": 4,
+	"id": 1,
 	"user": {
-		"id": 3,
-		"username": "hennanparticipante",
-		"email": "hennanparticipante@example.com",
-		"is_admin": false,
+		"id": 1,
+		"username": "Hennan",
+		"email": "hennan@gmail.com",
+		"is_admin": true,
 		"is_participant": true
 	},
 	"exam": {
 		"id": 1,
-		"name": "Prova 1 Update",
+		"name": "Prova 1 Teste",
 		"created_by": {
 			"id": 1,
 			"username": "Hennan",
@@ -277,25 +292,25 @@ Authorization: Bearer <seu_token_aqui>
 			"is_admin": true,
 			"is_participant": true
 		},
-		"created_at": "2024-12-03T21:33:44.828Z",
+		"created_at": "2024-12-04T01:41:07.711Z",
 		"questions": [
 			{
-				"id": 3,
+				"id": 1,
 				"text": "Teste 3",
-				"created_at": "2024-12-03T21:33:21.881Z",
+				"created_at": "2024-12-04T01:40:56.303Z",
 				"choices": [
 					{
-						"id": 13,
+						"id": 1,
 						"text": "alternativa1",
 						"is_correct": true
 					},
 					{
-						"id": 14,
+						"id": 2,
 						"text": "alternativa2",
 						"is_correct": false
 					},
 					{
-						"id": 15,
+						"id": 3,
 						"text": "alternativa3",
 						"is_correct": false
 					}
@@ -306,7 +321,7 @@ Authorization: Bearer <seu_token_aqui>
 			}
 		]
 	},
-	"started_at": "2024-12-03T22:15:02.832Z",
+	"started_at": "2024-12-04T01:42:11.293Z",
 	"finished_at": null,
 	"score": 0.0
 }
@@ -325,9 +340,9 @@ Authorization: Bearer <seu_token_aqui>
 
 ```json
 {
-	"participation_id": 4,
-	"question_id": 3,
-	"choice_id": 13
+	"participation_id": 1,
+	"question_id": 1,
+	"choice_id": 1
 }
 ```
 
@@ -337,17 +352,17 @@ Authorization: Bearer <seu_token_aqui>
 {
 	"id": 1,
 	"participation": {
-		"id": 4,
+		"id": 1,
 		"user": {
-			"id": 3,
-			"username": "hennanparticipante",
-			"email": "hennanparticipante@example.com",
-			"is_admin": false,
+			"id": 1,
+			"username": "Hennan",
+			"email": "hennan@gmail.com",
+			"is_admin": true,
 			"is_participant": true
 		},
 		"exam": {
 			"id": 1,
-			"name": "Prova 1 Update",
+			"name": "Prova 1 Teste",
 			"created_by": {
 				"id": 1,
 				"username": "Hennan",
@@ -355,25 +370,25 @@ Authorization: Bearer <seu_token_aqui>
 				"is_admin": true,
 				"is_participant": true
 			},
-			"created_at": "2024-12-03T21:33:44.828Z",
+			"created_at": "2024-12-04T01:41:07.711Z",
 			"questions": [
 				{
-					"id": 3,
+					"id": 1,
 					"text": "Teste 3",
-					"created_at": "2024-12-03T21:33:21.881Z",
+					"created_at": "2024-12-04T01:40:56.303Z",
 					"choices": [
 						{
-							"id": 13,
+							"id": 1,
 							"text": "alternativa1",
 							"is_correct": true
 						},
 						{
-							"id": 14,
+							"id": 2,
 							"text": "alternativa2",
 							"is_correct": false
 						},
 						{
-							"id": 15,
+							"id": 3,
 							"text": "alternativa3",
 							"is_correct": false
 						}
@@ -384,27 +399,27 @@ Authorization: Bearer <seu_token_aqui>
 				}
 			]
 		},
-		"started_at": "2024-12-03T22:15:02.832Z",
+		"started_at": "2024-12-04T01:42:11.293Z",
 		"finished_at": null,
 		"score": 0.0
 	},
 	"question": {
-		"id": 3,
+		"id": 1,
 		"text": "Teste 3",
-		"created_at": "2024-12-03T21:33:21.881Z",
+		"created_at": "2024-12-04T01:40:56.303Z",
 		"choices": [
 			{
-				"id": 13,
+				"id": 1,
 				"text": "alternativa1",
 				"is_correct": true
 			},
 			{
-				"id": 14,
+				"id": 2,
 				"text": "alternativa2",
 				"is_correct": false
 			},
 			{
-				"id": 15,
+				"id": 3,
 				"text": "alternativa3",
 				"is_correct": false
 			}
@@ -414,13 +429,72 @@ Authorization: Bearer <seu_token_aqui>
 		]
 	},
 	"choice": {
-		"id": 13,
+		"id": 1,
 		"text": "alternativa1",
 		"is_correct": true
 	},
-	"answered_at": "2024-12-03T22:16:15.754Z"
+	"answered_at": "2024-12-04T01:42:57.783Z"
 }
-
 ```
 
+### Finalize a prova
+
+**Método:** POST  
+**URL:** http://127.0.0.1:8000/api/exams/1/conclusions/
+
+
+**Cabeçalhos:**
+Content-Type: application/json  
+Authorization: Bearer <seu_token_aqui>
+
+**Resposta esperada**:
+
+```json
+{
+	"detail": "Cálculo da pontuação iniciado"
+}
+```
+
+A pontuação será calculada assícronamente por meio do Celery
+
+### Consulte o resultado
+
+**Método:** GET  
+**URL:** http://127.0.0.1:8000/api/exams/1/progresses/
+
+
+**Cabeçalhos:**
+Content-Type: application/json  
+Authorization: Bearer <seu_token_aqui>
+
+**Resposta esperada**:
+
+```json
+{
+	"status": "completed",
+	"score": 100.0
+}
+```
+### Consulte o ranking
+**Método:** GET  
+**URL:** http://127.0.0.1:8000/api/rankings/exams/1/
+
+
+**Cabeçalhos:**
+Content-Type: application/json  
+Authorization: Bearer <seu_token_aqui>
+
+**Resposta esperada**:
+
+```json
+[
+	{
+		"exam_id": 1,
+		"participant_id": 1,
+		"participant_username": "Hennan",
+		"score": 100.0,
+		"position": 1
+	}
+]
+```
 ### Consulte a documentação para mais detalhes dos esquemas de serialização.
