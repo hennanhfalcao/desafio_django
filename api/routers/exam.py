@@ -114,11 +114,11 @@ def delete_exam(request, exam_id: int):
 
 @router.get("/{exam_id}/participants/", response={200: list[ParticipationSchema], 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema})
 def list_participants(request,
-                       exam_id: int,
-                       query: str = None,
-                       order_by: str = "-id",
-                       page: int = 1,
-                       page_size: int = 10):
+                    exam_id: int,
+                    query: str = None,
+                    order_by: str = "-id",
+                    page: int = 1,
+                    page_size: int = 10):
     """Lista os participantes de uma prova por meio do ID
     Apenas administradores podem listar os participantes de uma prova.
     Busca, paginação e ordenação são opcionais."""
@@ -254,7 +254,7 @@ def finish_exam(request, exam_id: int):
     Portanto, para testar essa funcionalidade, crie uma participação, responda à prova e, aí sim, envie uma solicitação post para esta rota para que a prova seja finalizada e o celery inicie o cálculo da pontuação.
     Além dio mais, o ranking é atualizado conforme as participações nas provas são finalizadas.
     O usuário autenticado deve ser aquele que está participando da prova.
-    Para obter o ranking por prova acesse: GET /api/rankings/{exam_id}/ranking/"""
+    Para obter o ranking por prova acesse: GET /api/rankings/exams/{exam_id}/"""
 
     is_authenticated(request)
     

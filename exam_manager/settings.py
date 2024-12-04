@@ -179,7 +179,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'custom_logger': {  # Logger customizado
+        'custom_logger': { 
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
@@ -190,11 +190,11 @@ LOGGING = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",  # Use o nome do serviço Redis do Docker Compose
+        "LOCATION": "redis://redis:6379/1",  
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
-        "KEY_PREFIX": "desafio_django"  # Prefixo para evitar conflitos entre apps
+        "KEY_PREFIX": "desafio_django"  
     }
 }
 

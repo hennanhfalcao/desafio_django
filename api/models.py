@@ -53,7 +53,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-# Modelo de Provas
 class ModelExam(models.Model):
     name = models.CharField(max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_exams")
@@ -64,8 +63,6 @@ class ModelExam(models.Model):
     def __str__(self):
         return self.name
 
-
-# Modelo de Participação com dados adicionais
 class ModelParticipation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="participations")
     exam = models.ForeignKey(ModelExam, on_delete=models.CASCADE, related_name="participations")
@@ -76,8 +73,6 @@ class ModelParticipation(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.exam.name}"
 
-
-# Modelo de Questões
 class ModelQuestion(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -86,8 +81,6 @@ class ModelQuestion(models.Model):
         exam_names = ", ".join(exam.name for exam in self.exams.all())
         return f"Exames: {exam_names if exam_names else 'Nenhum'} - {self.text[:50]}"
 
-
-# Modelo de Escolhas
 class ModelChoice(models.Model):
     question = models.ForeignKey(ModelQuestion, on_delete=models.CASCADE, related_name="choices")
     text = models.CharField(max_length=255)
@@ -96,8 +89,6 @@ class ModelChoice(models.Model):
     def __str__(self):
         return f"{self.question.text[:50]} - {self.text}"
 
-
-# Modelo de Respostas
 class ModelAnswer(models.Model):
     participation = models.ForeignKey(ModelParticipation, on_delete=models.CASCADE, related_name="answers")
     question = models.ForeignKey(ModelQuestion, on_delete=models.CASCADE, related_name="answers")
@@ -107,8 +98,6 @@ class ModelAnswer(models.Model):
     def __str__(self):
         return f"{self.participation.user.username} - {self.question.text[:50]} - {self.choice.text}"
     
-
-
 class ModelRanking(models.Model):
     exam = models.ForeignKey("ModelExam", on_delete=models.CASCADE, related_name="rankings")
     participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rankings")

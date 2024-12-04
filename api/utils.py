@@ -13,8 +13,8 @@ def generate_jwt(user):
     payload = {
         'user_id': user.id,
         'username': user.username,
-        'exp': datetime.now(tz=timezone.utc) + timedelta(minutes=30),  # Expira em 30 minutos
-        'iat': datetime.now(tz=timezone.utc),  # Emitido em
+        'exp': datetime.now(tz=timezone.utc) + timedelta(minutes=30),
+        'iat': datetime.now(tz=timezone.utc), 
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
     return token.decode('utf-8') if isinstance(token, bytes) else token

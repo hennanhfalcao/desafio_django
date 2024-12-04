@@ -1,5 +1,5 @@
 from celery import shared_task
-from api.models import ModelParticipation, ModelAnswer, ModelChoice, ModelExam, ModelRanking
+from api.models import ModelParticipation, ModelExam, ModelRanking
 from django.utils.timezone import now
 
 
@@ -24,7 +24,6 @@ def calculate_score(participation_id):
         participation.finished_at = now()
         participation.save()
 
-        # Gerar o ranking
         generate_ranking.delay(participation.exam.id)
 
         return f"Score calculado com sucesso para a participação {participation_id}: {score}%"

@@ -3,14 +3,12 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
-# User Schemas
 class UserCreateSchema(BaseModel):
     username: str
     password: str
     email: Optional[EmailStr] = None
     is_admin: bool
     is_participant: bool
-
 
 class UserSchema(BaseModel):
     id: int
@@ -32,7 +30,6 @@ class UserSchema(BaseModel):
     class Config:
         from_attributes = True
 
-
 class UserUpdateSchema(BaseModel):
     username: Optional[str]
     password: Optional[str]
@@ -43,21 +40,18 @@ class UserUpdateSchema(BaseModel):
     class Config:
         from_attributes = True
 
-# Exam Schemas
-
 class ExamUpdateSchema(BaseModel):
     name: Optional[str]
 
     class Config:
         from_attributes=True
 
-
 class ExamSchema(BaseModel):
     id: int
     name: str
     created_by: UserSchema
     created_at: datetime
-    questions: Optional[List["QuestionSchema"]] # Relacionamento muitos-para-muitos
+    questions: Optional[List["QuestionSchema"]]
 
     @classmethod
     def model_validate(cls, obj):
@@ -69,12 +63,8 @@ class ExamSchema(BaseModel):
             questions=[QuestionSchema.model_validate(q) for q in obj.questions.all()],
         )
 
-
 class ExamCreateSchema(BaseModel):
     name: str
-
-
-# Participation Schemas
 
 class ParticipationCreateSchema(BaseModel):
     user_id: int
@@ -104,8 +94,6 @@ class ParticipationUpdateSchema(BaseModel):
     finished_at: Optional[datetime] = None
     score: Optional[float] = None
 
-
-# Question Schemas
 class QuestionSchema(BaseModel):
     id: int
     text: str
@@ -123,7 +111,6 @@ class QuestionSchema(BaseModel):
             exam_ids=list(obj.exams.values_list("id", flat=True)),
         )
 
-
 class QuestionCreateSchema(BaseModel):
     text: str
     choices: List["ChoiceCreateSchema"]
@@ -133,13 +120,10 @@ class QuestionUpdateSchema(BaseModel):
     exam_ids: Optional[List[int]] = None 
     choices: Optional[List["ChoiceUpdateSchema"]] = None 
     
-
-# Choice Schemas
 class ChoiceSchema(BaseModel):
     id: int
     text: str
     is_correct: bool
-
 
     @classmethod
     def model_validate(cls, obj):
@@ -149,7 +133,6 @@ class ChoiceSchema(BaseModel):
             is_correct=obj.is_correct,
         )
 
-
 class ChoiceCreateSchema(BaseModel):
     text: str
     is_correct: bool
@@ -158,8 +141,6 @@ class ChoiceUpdateSchema(BaseModel):
     text: Optional[str] = None
     is_correct: Optional[bool] = None
 
-
-# Answer Schemas
 class AnswerSchema(BaseModel):
     id: int
     participation: ParticipationSchema
